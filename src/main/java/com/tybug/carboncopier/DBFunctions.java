@@ -26,13 +26,22 @@ public class DBFunctions {
 	 */
 	public static HashMap<String, String> getLinkedChannels() {
 		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'CHANNELS'");
-		
 	}
+	
+	public static HashMap<String, String> getLinkedGuilds(){
+		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'GUILDS'");
+	}
+	
+	
+	
 	
 	
 	public static List<String> getTargetGuilds() {
-		return getListFromDatabase("info", "ID", "SELECT * FROM 'TARGETS'");
+		return getListFromDatabase("info", "TARGET", "SELECT * FROM 'GUILDS'");
 	}
+	
+	
+	
 	
 	public static String getLinkedMessage(String id) {
 		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `MESSAGES` WHERE `SOURCE` = \"" + id + "\"");
