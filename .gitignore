@@ -4,10 +4,10 @@
 /db/
 /gradle/
 /.DS_Store/
-/gradlew/
-/gradlew.bat/
+/gradlew
+/gradlew.bat
 /messages.txt/
-/settings.gradle/
+/settings.gradle
 /build/
 /.classpath
 /.project
