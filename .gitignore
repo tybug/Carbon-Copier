@@ -1,0 +1,15 @@
+/.gradle/
+/.settings/
+/Data/
+/db/
+/gradle/
+/.DS_Store/
+/gradlew/
+/gradlew.bat/
+/messages.txt/
+/settings.gradle/
+/build/
+/.classpath
+/.project
+/**/*.class
+/token.txt
