@@ -13,8 +13,10 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
+import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 
@@ -23,7 +25,7 @@ public class Hub {
 
 	private static List<String> targetGuilds = null;
 	private static HashMap<String, String> linkedChannels = null;
-
+	private static HashMap<String, String> linkedGuilds = null;
 
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
@@ -32,8 +34,9 @@ public class Hub {
 	private static final Color COLOR_DELETE = Color.decode("#ff2a00");
 
 	public static void setup() {
-		linkedChannels = DBFunctions.getLinkedChannels();
 		targetGuilds = DBFunctions.getTargetGuilds();
+		linkedChannels = DBFunctions.getLinkedChannels();
+		linkedGuilds = DBFunctions.getLinkedGuilds();
 	}
 
 
@@ -91,6 +94,11 @@ public class Hub {
 		
 		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
 		
+		List<Field> fields = embed.getFields();
+		if(fields.size() > 0) {
+			eb.addField(embed.getFields().get(0));
+		}
+		
 		targetMessage.editMessage(eb.build()).queue();
 	}
 
@@ -145,6 +153,15 @@ public class Hub {
 		targetMessage.editMessage(eb.build()).queue();
 
 
+	}
+	
+	
+	
+	public static void updateRole(Role r) {
+		
+		// TODO get linked role from db (already linked in roleCreateEvent) then move to previous position
+		Guild g = r.getGuild();
+		g.getJDA().getGuildById(linkedGuilds.get(g.getId())).getController().createCopyOfRole(r).queue();
 	}
 
 	
