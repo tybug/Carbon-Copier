@@ -26,10 +26,10 @@ public class Hub {
 
 
 	private static final String TEMP_URL = "https://gmail.com";
-	private static final Color COLOR_MESSAGE = Color.decode("42f450");
-	private static final Color COLOR_REACT = Color.decode("f9c131");
-	private static final Color COLOR_EDIT = Color.decode("f3f718");
-	private static final Color COLOR_DELETE = Color.decode("ff2a00");
+	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
+	private static final Color COLOR_REACT = Color.decode("#f9c131");
+	private static final Color COLOR_EDIT = Color.decode("#f3f718");
+	private static final Color COLOR_DELETE = Color.decode("#ff2a00");
 
 	public static void setup() {
 		linkedChannels = DBFunctions.getLinkedChannels();
