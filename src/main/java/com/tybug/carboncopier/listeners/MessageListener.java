@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.tybug.carboncopier.Hub;
 
-import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.User;
@@ -20,7 +20,7 @@ public class MessageListener extends ListenerAdapter {
 		if(Hub.isTargetGuild(event.getGuild().getId())) {
 			return;
 		}
-		Guild guild = event.getGuild();
+		JDA jda = event.getJDA();
 		User author = event.getAuthor();
 		Message message = event.getMessage();
 		
@@ -31,8 +31,9 @@ public class MessageListener extends ListenerAdapter {
 		OffsetDateTime timestamp = message.getCreationTime();
 		String messageID = message.getId();
 		String channelID = event.getChannel().getId();
+		String guildID = event.getGuild().getId();
 		
-        Hub.sendMessage(guild, profileURL, username, content, attachments, timestamp, messageID, channelID);
+        Hub.sendMessage(jda, profileURL, username, content, attachments, timestamp, messageID, channelID, guildID);
     }
 	
 	@Override
@@ -41,12 +42,12 @@ public class MessageListener extends ListenerAdapter {
 			return;
 		}
 		
-		Guild guild = event.getGuild();
+		JDA jda = event.getJDA();
 		String messageID = event.getMessage().getId();
 		String channelID = event.getChannel().getId();
 		
 		
-        Hub.editMessage(guild, messageID, channelID);
+        Hub.editMessage(jda, messageID, channelID);
 	}
 	
 }
