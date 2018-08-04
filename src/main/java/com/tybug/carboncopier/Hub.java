@@ -1,5 +1,6 @@
 package com.tybug.carboncopier;
 
+import java.awt.Color;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +26,10 @@ public class Hub {
 
 
 	private static final String TEMP_URL = "https://gmail.com";
+	private static final Color COLOR_MESSAGE = Color.decode("42f450");
+	private static final Color COLOR_REACT = Color.decode("f9c131");
+	private static final Color COLOR_EDIT = Color.decode("f3f718");
+	private static final Color COLOR_DELETE = Color.decode("ff2a00");
 
 	public static void setup() {
 		linkedChannels = DBFunctions.getLinkedChannels();
@@ -55,7 +60,8 @@ public class Hub {
 			jda.getUserById("216008405758771200").openPrivateChannel().complete()
 			.sendMessage("wtf someone sent more than one attachment in a message fucking fix it pls").queue();
 		} 
-
+		
+		eb.setColor(COLOR_MESSAGE);
 
 		String target = channel.sendMessage(eb.build()).complete().getId();
 
@@ -82,7 +88,9 @@ public class Hub {
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
 		eb.setDescription(sourceMessage.getContentRaw());
 		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(sourceMessage.getEditedTime()) + ")", embed.getFooter().getIconUrl());
-
+		
+		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
+		
 		targetMessage.editMessage(eb.build()).queue();
 	}
 
@@ -133,16 +141,17 @@ public class Hub {
 		
 		
 		eb.addField("Reactions", sb.toString(), false);
+		eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		targetMessage.editMessage(eb.build()).queue();
 
 
 	}
 
-
 	
 	
 	
-
+	
+	
 	public static boolean isTargetGuild(String id) {
 		if(targetGuilds.contains(id)) {
 			return true;
@@ -150,6 +159,37 @@ public class Hub {
 
 		return false;
 	}
+	
+	
+	
+	
+	private static Color compareColors(Color c1, Color c2) {
+		if(getColorPriority(c1) > getColorPriority(c2)) {
+			return c1;
+		}
+		
+		return c2;
+		
+	}
+	
+	private static int getColorPriority(Color c) {
+		int rgb = c.getRGB();
+		
+		if(rgb == COLOR_MESSAGE.getRGB()) return 1;
+		if(rgb == COLOR_REACT.getRGB()) return 2;
+		if(rgb == COLOR_EDIT.getRGB()) return 3;
+		if(rgb == COLOR_DELETE.getRGB()) return 4;
+		
+		return 0;
+
+	}
+//	private static final String TEMP_URL = "https://gmail.com";
+//	private static final Color COLOR_MESSAGE = Color.decode("42f450");
+//	private static final Color COLOR_REACT = Color.decode("f9c131");
+//	private static final Color COLOR_EDIT = Color.decode("f3f718");
+//	private static final Color COLOR_DELETE = Color.decode("ff2a00");
+
+	
 
 	private static String parseTime(OffsetDateTime timestamp) {
 		return timestamp.getMonthValue() + "/" + timestamp.getDayOfMonth() + "/" + timestamp.getYear() + " " + timestamp.getHour() + ":" + timestamp.getMinute();
