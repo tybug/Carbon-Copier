@@ -2,9 +2,11 @@ package com.tybug.carboncopier;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -23,7 +25,6 @@ public class DBFunctions {
 	 * [ID :: carbon ID]
 	 */
 	public static HashMap<String, String> getLinkedChannels() {
-		
 		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'CHANNELS'");
 		
 	}
@@ -34,13 +35,49 @@ public class DBFunctions {
 	}
 	
 	public static String getLinkedMessage(String id) {
-		return getStringFromDatabase("info", "TARGET", "SELECT * WHERE 'SOURCE' = " + id);
+		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `MESSAGES` WHERE `SOURCE` = \"" + id + "\"");
+
 	}
 	
 	
 	
 	public static void linkMessage(String source, String target) {
-		//TODO
+		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'MESSAGES' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	}
+	
+	
+	
+	
+	
+		
+	
+	
+	
+	/**
+	 * Changes the content of the given database according to the given sql statement
+	 * @param database The name of the database to modify
+	 * @param args The strings to insert into the prepared sql statement
+	 * @param sql The sql statement to execute
+	 */
+	public static void modifyDatabase(String database, List<String> args, String sql) {
+		Connection c = null;
+		PreparedStatement stmt = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			c = DriverManager.getConnection("jdbc:sqlite:db/" + database + ".db");
+			c.setAutoCommit(false);
+			stmt = c.prepareStatement(sql); 
+			for(String s : args) {
+				stmt.setString(args.indexOf(s) + 1, s);
+			}
+			stmt.executeUpdate();
+			c.commit();
+
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+		} finally {
+			close(stmt, c);
+		}
 	}
 	
 	
@@ -115,11 +152,11 @@ public class DBFunctions {
 	/**
 	 * Gets a single string with the given condition from a database
 	 * @param database The name of the database to look through
-	 * @param arg The table to add contents to the list from
+	 * @param column The name of the column to add contents to the list from
 	 * @param sql The sql statement to execute
-	 * @return String The first item returned by the sql statement, selected from the table with name arg
+	 * @return String The first item returned by the sql statement, selected from the column named
 	 */
-	public static String getStringFromDatabase(String database, String arg, String sql) {
+	public static String getStringFromDatabase(String database, String column, String sql) {
 		Connection c = null;
 		Statement stmt = null;
 		try {
@@ -129,10 +166,11 @@ public class DBFunctions {
 			
 			stmt = c.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
-			if (rs.next()) {
-				return rs.getString(arg);
+			String ret = null;
+			while (rs.next()) {
+				ret = rs.getString(column);
 			}
-			return null;
+			return ret;
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			return null;

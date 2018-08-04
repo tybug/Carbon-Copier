@@ -6,6 +6,7 @@ import java.util.List;
 
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -31,11 +32,13 @@ public class Hub {
 
 		TextChannel channel = jda.getTextChannelById(linkedChannels.get(channelID));
 		
+		
+		
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setAuthor(username, TEMP_URL, profileURL);
 		eb.setDescription(content);
 		
-		String time = timestamp.getMonthValue() + "/" + timestamp.getDayOfMonth() + "/" + timestamp.getYear() + " " + timestamp.getHour() + ":" + timestamp.getMinute();
+		String time = parseTime(timestamp);
 		eb.setFooter("Blair Discord • " + time, jda.getGuildById(guildID).getIconUrl());
 		
 		if(attachments.size() == 1) {
@@ -61,17 +64,20 @@ public class Hub {
 	
 	public static void editMessage(JDA jda, String messageID, String channelID) {
 		
+		TextChannel sourceChannel = jda.getTextChannelById(channelID);
+		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
+		
 		EmbedBuilder eb = new EmbedBuilder();
+		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
+		Message sourceMessage = sourceChannel.getMessageById(messageID).complete();
 		
-		String linkedMessageID = DBFunctions.getLinkedMessage(messageID);
-				
-		MessageEmbed embed = jda.getTextChannelById(linkedChannels.get(channelID)).getMessageById(linkedMessageID).complete().getEmbeds().get(0);
+		MessageEmbed embed = targetMessage.getEmbeds().get(0);
+
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
-		eb.setDescription(embed.getDescription());
-		eb.setFooter(embed.getFooter().getText(), embed.getFooter().getIconUrl());
+		eb.setDescription(sourceMessage.getContentRaw());
+		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(sourceMessage.getEditedTime()) + ")", embed.getFooter().getIconUrl());
 		
-		jda.getTextChannelById(channelID).editMessageById(messageID, eb.build()).queue();
-		
+		targetMessage.editMessage(eb.build()).queue();
 	}
 	
 	
@@ -82,6 +88,10 @@ public class Hub {
 		}
 		
 		return false;
+	}
+	
+	private static String parseTime(OffsetDateTime timestamp) {
+		return timestamp.getMonthValue() + "/" + timestamp.getDayOfMonth() + "/" + timestamp.getYear() + " " + timestamp.getHour() + ":" + timestamp.getMinute();
 	}
 	
 	
