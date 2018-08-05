@@ -24,6 +24,7 @@ public class MessageListener extends ListenerAdapter {
 	public void onMessageReceived(MessageReceivedEvent event) {
 		
 		
+		// temporary for debugging linked ids etc
 		if(event.getMessage().getContentDisplay().startsWith("!info")) {
 			
 			
