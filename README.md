@@ -9,3 +9,7 @@ Currently supported events:
 * GenericRoleUpdateEvent
 * RoleCreateEvent
 * RoleDeleteEvent
+* TextChannelUpdateNameEvent
+* TextChannelUpdateTopicEvent
+* TextChannelUpdatePermissionsEvent
+* TextChannelUpdateNSFWEvent
