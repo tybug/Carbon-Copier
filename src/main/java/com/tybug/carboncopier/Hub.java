@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -287,8 +286,8 @@ public class Hub {
 	 * <p>
 	 * Updates the cache stored in linkedGuilds to the most recent version from the db
 	 */
-	private static void updateLinkedGuilds() {
-		linkedChannels = DBFunctions.getLinkedChannels();
+	public static void updateLinkedGuilds() {
+		linkedGuilds = DBFunctions.getLinkedGuilds();
 	}
 	
 	
