@@ -13,3 +13,6 @@ Currently supported events:
 * TextChannelUpdateTopicEvent
 * TextChannelUpdatePermissionsEvent
 * TextChannelUpdateNSFWEvent
+
+## Commands
+* !link \[source] \[target] - Links two guilds together
