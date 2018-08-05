@@ -10,6 +10,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Querying and updating the database. <br>
+ * References to "source" are the guild that the action occurs on first, which is then carbon copied to the "target".
+ * @author Liam DeVoe
+ */
 public class DBFunctions {
 
 	
@@ -20,36 +25,59 @@ public class DBFunctions {
 	
 	
 	/**
-	 * @return HashMap<String, String> <br>
-	 * For each text channel: <br>
-	 * [ID :: carbon ID]
+	 * @return {@literal HashMap<String, String> } <br>
+	 * For each linked text channel: <br>
+	 * [SOURCE ID :: TARGET ID]
 	 */
 	public static HashMap<String, String> getLinkedChannels() {
 		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'CHANNELS'");
 	}
 	
+	
+	/**
+	 * @return {@literal HashMap<String, String> } <br>
+	 * For each linked guild: <br>
+	 * [SOURCE ID :: TARGET ID]
+	 */
 	public static HashMap<String, String> getLinkedGuilds(){
 		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'GUILDS'");
 	}
 	
+	/**
+	 * @return {@literal HashMap<String, String> } <br>
+	 * For each linked role: <br>
+	 * [SOURCE ID :: TARGET ID]
+	 */
+	public static HashMap<String, String> getLinkedRoles(){
+		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * FROM 'ROLES'");
+	}
 	
 	
 	
-	
+	/**
+	 * @return {@literal List<String> } A list containing the ids of the target guilds <br>
+	 */
 	public static List<String> getTargetGuilds() {
 		return getListFromDatabase("info", "TARGET", "SELECT * FROM 'GUILDS'");
 	}
 	
 	
 	
-	
+	/**
+	 * @param id The SOURCE message's id
+	 * @return The TARGET id linked to the SOURCE id
+	 */
 	public static String getLinkedMessage(String id) {
 		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `MESSAGES` WHERE `SOURCE` = \"" + id + "\"");
 
 	}
 	
 	
-	
+	/**
+	 * Inserts values (source, target) into the MESSAGES table in the INFO database
+	 * @param source The source message id
+	 * @param target The target message id
+	 */
 	public static void linkMessage(String source, String target) {
 		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'MESSAGES' ('SOURCE', 'TARGET') VALUES (?, ?)");
 	}
