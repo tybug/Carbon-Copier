@@ -55,10 +55,19 @@ public class DBFunctions {
 	
 	
 	/**
-	 * @return {@literal List<String> } A list containing the ids of the target guilds <br>
+	 * @return {@literal List<String> } A list containing the ids of the target guilds
 	 */
 	public static List<String> getTargetGuilds() {
 		return getListFromDatabase("info", "TARGET", "SELECT * FROM 'GUILDS'");
+	}
+	
+	
+	
+	/**
+	 * @return {@literal List<String> } A list containing the ids of users who can use commands
+	 */
+	public static List<String> getAuthorizedUsers(){
+		return getListFromDatabase("info", "ID", "SELECT * FROM 'AUTHORIZED'");
 	}
 	
 	
@@ -70,6 +79,10 @@ public class DBFunctions {
 	public static String getLinkedMessage(String id) {
 		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `MESSAGES` WHERE `SOURCE` = \"" + id + "\"");
 	}
+	
+	
+	
+	
 	
 	/**
 	 * @param id The SOURCE role id
@@ -122,6 +135,20 @@ public class DBFunctions {
 	 */
 	public static void linkChannel(String source, String target) {
 		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'CHANNELS' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	}
+	
+	
+	
+	
+	/**
+	 * Links two guilds
+	 * <p>
+	 * Inserts values (source, target) into the GUILDS table in the INFO database
+	 * @param source The source guild id
+	 * @param target The target guild id
+	 */
+	public static void linkGuild(String source, String target) {
+		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'GUILDS' ('SOURCE', 'TARGET') VALUES (?, ?)");
 	}
 	
 	

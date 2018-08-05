@@ -7,6 +7,7 @@ import java.io.IOException;
 import javax.security.auth.login.LoginException;
 
 import com.tybug.carboncopier.listeners.ChannelListener;
+import com.tybug.carboncopier.listeners.CommandListener;
 import com.tybug.carboncopier.listeners.MessageListener;
 import com.tybug.carboncopier.listeners.ReactionListener;
 import com.tybug.carboncopier.listeners.RoleListener;
@@ -35,7 +36,7 @@ public class CarbonCopier {
 			@SuppressWarnings("unused")
 			JDA jda = new JDABuilder(AccountType.BOT) 
 					.setToken(token) //pass the token (loaded from an ignored file, this time)
-					.addEventListener(new MessageListener(), new ReactionListener(), new RoleListener(), new ChannelListener()) // add all the listeners
+					.addEventListener(new MessageListener(), new ReactionListener(), new RoleListener(), new ChannelListener(), new CommandListener()) // add all the listeners
 					.setGame(Game.playing("Created by Liam")) //set "Playing..." display message
 					.buildBlocking();  //build the whole thing, blocking guarantees it will be completely loaded vs async which does not
 			
