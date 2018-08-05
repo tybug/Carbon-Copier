@@ -64,16 +64,29 @@ public class DBFunctions {
 	
 	
 	/**
-	 * @param id The SOURCE message's id
+	 * @param id The SOURCE message id
 	 * @return The TARGET id linked to the SOURCE id
 	 */
 	public static String getLinkedMessage(String id) {
 		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `MESSAGES` WHERE `SOURCE` = \"" + id + "\"");
-
 	}
+	
+	/**
+	 * @param id The SOURCE role id
+	 * @return The TARGET id linked to the SOURCE id
+	 */
+	public static String getLinkedRole(String id) {
+		return getStringFromDatabase("info", "TARGET", "SELECT * FROM `ROLES` WHERE `SOURCE` = \"" + id + "\"");
+	}
+	
+
+	
+	
 	
 	
 	/**
+	 * Links two messages
+	 * <p>
 	 * Inserts values (source, target) into the MESSAGES table in the INFO database
 	 * @param source The source message id
 	 * @param target The target message id
@@ -86,7 +99,32 @@ public class DBFunctions {
 	
 	
 	
-		
+	/**
+	 * Links two roles
+	 * <p>
+	 * Inserts values (source, target) into the ROLES table in the INFO database
+	 * @param source The source role id
+	 * @param target The target role id
+	 */
+	public static void linkRole(String source, String target) {
+		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'ROLES' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	}
+	
+	
+	
+	/**
+	 * Modifies a pre-existing link between two roles
+	 * <p>
+	 * Updates the previous TARGET value to the passed TARGET value where they both share the SOURCE value
+	 * @param source The source role id
+	 * @param target The target role id
+	 */
+	public static void updateRoleLink(String source, String target) {
+		modifyDatabase("info", Arrays.asList(target, source), "UPDATE `ROLES` SET `TARGET` = ? WHERE `SOURCE` = ?");
+	}
+	
+	
+	
 	
 	
 	

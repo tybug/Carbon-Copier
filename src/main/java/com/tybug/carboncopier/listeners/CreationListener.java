@@ -12,7 +12,10 @@ public class CreationListener extends ListenerAdapter {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void onGenericRoleUpdate(GenericRoleUpdateEvent event) {		
+	public void onGenericRoleUpdate(GenericRoleUpdateEvent event) {	
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
 		Hub.updateRole(event.getRole());
 	}
 	
@@ -20,13 +23,19 @@ public class CreationListener extends ListenerAdapter {
 	
 	@Override
 	public void onRoleCreate(RoleCreateEvent event) {
-		// TODO create new role, link two in db
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
+		Hub.createRole(event.getRole());
 	}
 	
 	
 	
 	@Override
 	public void onRoleDelete(RoleDeleteEvent event) {
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
 		// TODO delete old role, remove link from db
 	}
 }

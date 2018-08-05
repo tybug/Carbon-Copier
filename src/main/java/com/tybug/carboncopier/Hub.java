@@ -19,6 +19,7 @@ import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.managers.GuildController;
 
 public class Hub {
 
@@ -157,14 +158,48 @@ public class Hub {
 	
 	
 	
-	public static void updateRole(Role r) {
+	public static void updateRole(Role source) {
+		System.out.println("\n\nUpdating role");
+		int pos = source.getPosition();
+		System.out.println("position: " + pos);
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		GuildController targetController = targetGuild.getController();
 		
-		// TODO get linked role from db (already linked in roleCreateEvent) then move to previous position
-		Guild g = r.getGuild();
-		g.getJDA().getGuildById(linkedGuilds.get(g.getId())).getController().createCopyOfRole(r).queue();
+		targetGuild.getRoleById(DBFunctions.getLinkedRole(source.getId())).delete().complete(); 
+		//make sure we delete if before we make a new one with potentially the same name
+		
+		Role target = targetController.createCopyOfRole(source).complete();
+		System.out.println("Target role: " + target.getId());
+		System.out.println("Source role: " + source.getId());
+
+		targetController.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
+		
+		DBFunctions.updateRoleLink(source.getId(), target.getId());
 	}
 
 	
+	public static void createRole(Role source) {
+		System.out.println("\n\nCreating role");
+
+		int pos = source.getPosition();
+		System.out.println("position: " + pos);
+
+		Guild sourceGuild = source.getGuild();
+
+		GuildController gc = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
+		
+		Role target = gc.createCopyOfRole(source).complete();
+		target.getManager().setColor(Role.DEFAULT_COLOR_RAW).queue(); // It doesn't have the default color when copied for some reason
+		gc.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
+		
+		System.out.println("Target role: " + target.getId());
+		System.out.println("Source role: " + source.getId());
+		
+		DBFunctions.linkRole(source.getId(), target.getId());
+		
+		
+	}
 	
 	
 	
@@ -211,6 +246,7 @@ public class Hub {
 	private static String parseTime(OffsetDateTime timestamp) {
 		return timestamp.getMonthValue() + "/" + timestamp.getDayOfMonth() + "/" + timestamp.getYear() + " " + timestamp.getHour() + ":" + timestamp.getMinute();
 	}
+
 
 
 }
