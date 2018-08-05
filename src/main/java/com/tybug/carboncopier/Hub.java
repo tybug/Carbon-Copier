@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.entities.Channel;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
@@ -207,6 +208,37 @@ public class Hub {
 	
 	
 	
+	
+	public static void createTextChannel(TextChannel source) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		Channel target = targetGuild.getController().createCopyOfChannel(source).complete();
+		DBFunctions.linkChannel(source.getId(), target.getId());
+		
+		updateLinkedChannels();
+	}
+	
+	
+	
+	/**
+	 * Updates linkedChannels
+	 * <p>
+	 * Updates the cache stored in linkedChannels to the most recent version from the db
+	 */
+	private static void updateLinkedChannels() {
+		linkedChannels = DBFunctions.getLinkedChannels();
+	}
+	
+	/**
+	 * Updates linkedGuilds
+	 * <p>
+	 * Updates the cache stored in linkedGuilds to the most recent version from the db
+	 */
+	private static void updateLinkedGuilds() {
+		linkedChannels = DBFunctions.getLinkedChannels();
+	}
+	
+	
 	public static boolean isTargetGuild(String id) {
 		if(targetGuilds.contains(id)) {
 			return true;
@@ -238,11 +270,7 @@ public class Hub {
 		return 0;
 
 	}
-//	private static final String TEMP_URL = "https://gmail.com";
-//	private static final Color COLOR_MESSAGE = Color.decode("42f450");
-//	private static final Color COLOR_REACT = Color.decode("f9c131");
-//	private static final Color COLOR_EDIT = Color.decode("f3f718");
-//	private static final Color COLOR_DELETE = Color.decode("ff2a00");
+
 
 	
 

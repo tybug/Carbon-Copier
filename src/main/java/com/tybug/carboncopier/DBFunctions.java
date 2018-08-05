@@ -112,6 +112,20 @@ public class DBFunctions {
 	
 	
 	
+	
+	/**
+	 * Links two channels
+	 * <p>
+	 * Inserts values (source, target) into the CHANNELS table in the INFO database
+	 * @param source The source channel id
+	 * @param target The target channel id
+	 */
+	public static void linkChannel(String source, String target) {
+		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'CHANNELS' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	}
+	
+	
+	
 	/**
 	 * Modifies a pre-existing link between two roles
 	 * <p>
