@@ -6,3 +6,6 @@ Currently supported events:
 * MessageReceivedEvent
 * MessageUpdateEvent
 * GuildMessageReactionAddEvent
+* GenericRoleUpdateEvent
+* RoleCreateEvent
+* RoleDeleteEvent
