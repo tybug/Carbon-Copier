@@ -125,6 +125,12 @@ public class DBFunctions {
 	
 	
 	
+	public static void deleteRoleLink(String source) {
+		modifyDatabase("info", Arrays.asList(source), "DELETE FROM `ROLES` WHERE `SOURCE` = ?");
+	}
+	
+	
+	
 	
 	
 	

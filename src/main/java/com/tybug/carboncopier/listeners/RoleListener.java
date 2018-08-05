@@ -7,7 +7,7 @@ import net.dv8tion.jda.core.events.role.RoleDeleteEvent;
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
-public class CreationListener extends ListenerAdapter {
+public class RoleListener extends ListenerAdapter {
 
 
 	@SuppressWarnings("rawtypes")
@@ -36,6 +36,6 @@ public class CreationListener extends ListenerAdapter {
 		if(Hub.isTargetGuild(event.getGuild().getId())) {
 			return;
 		}
-		// TODO delete old role, remove link from db
+		Hub.deleteRole(event.getRole());
 	}
 }
