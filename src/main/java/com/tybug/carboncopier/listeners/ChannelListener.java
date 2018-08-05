@@ -40,26 +40,23 @@ public class ChannelListener extends ListenerAdapter {
 		//		We don't want to actually delete the copy of the channel, but how do we deal with name conflicts? Discuss later.
 
 		
-		
-		
 		else if(event instanceof TextChannelUpdateNameEvent) {
-
+			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.NAME);
 		}
-
 		else if(event instanceof TextChannelUpdateTopicEvent) {
-
+			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.TOPIC);
 		}
 		else if(event instanceof TextChannelUpdatePositionEvent) {
-
+			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.POSITION);
 		}
 		else if(event instanceof TextChannelUpdatePermissionsEvent) {
-
+			Hub.updateChannelPerms(event.getChannel(), ((TextChannelUpdatePermissionsEvent) event).getChangedRoles());
 		}
 		else if(event instanceof TextChannelUpdateNSFWEvent) {
-
+			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.NSFW);
 		}
 		else if(event instanceof TextChannelUpdateParentEvent) {
-
+			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.PARENT);
 		}
 
 	}

@@ -3,12 +3,17 @@ package com.tybug.carboncopier;
 import java.awt.Color;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.tybug.carboncopier.listeners.ChannelUpdateAction;
+
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Channel;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
@@ -20,11 +25,12 @@ import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.managers.GuildController;
 
 public class Hub {
 
-
+	
 	private static List<String> targetGuilds = null;
 	private static HashMap<String, String> linkedChannels = null;
 	private static HashMap<String, String> linkedGuilds = null;
@@ -217,6 +223,53 @@ public class Hub {
 		
 		updateLinkedChannels();
 	}
+	
+	
+	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		ChannelManager manager = target.getManager();
+		
+		switch(action) {
+		case NAME:
+			manager.setName(source.getName()).queue();
+			break;
+			
+		case TOPIC:
+			manager.setTopic(source.getTopic()).queue();
+			break;
+			
+		case POSITION:
+			// TODO figure out how position works with categories
+			break;
+			
+		case NSFW:
+			manager.setNSFW(source.isNSFW()).queue();
+			break;
+			
+		case PARENT:
+			// TODO get linked category
+			break;
+		}
+	}
+	
+	
+	public static void updateChannelPerms(Channel source, Collection<Role> roles) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		ChannelManager manager = target.getManager();
+		
+		for(Role r : roles) {
+			List<Permission> allowed = source.getPermissionOverride(r).getAllowed();
+			List<Permission> denied = source.getPermissionOverride(r).getDenied();
+
+			manager.putPermissionOverride(targetGuild.getRoleById(DBFunctions.getLinkedRole(r.getId())), allowed, denied).queue();
+		}
+	}
+	
+	
 	
 	
 	
