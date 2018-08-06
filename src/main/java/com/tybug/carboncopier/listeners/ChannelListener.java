@@ -2,6 +2,12 @@ package com.tybug.carboncopier.listeners;
 
 import com.tybug.carboncopier.Hub;
 
+import net.dv8tion.jda.core.events.channel.category.CategoryCreateEvent;
+import net.dv8tion.jda.core.events.channel.category.CategoryDeleteEvent;
+import net.dv8tion.jda.core.events.channel.category.GenericCategoryEvent;
+import net.dv8tion.jda.core.events.channel.category.update.CategoryUpdateNameEvent;
+import net.dv8tion.jda.core.events.channel.category.update.CategoryUpdatePermissionsEvent;
+import net.dv8tion.jda.core.events.channel.category.update.CategoryUpdatePositionEvent;
 import net.dv8tion.jda.core.events.channel.text.GenericTextChannelEvent;
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent;
 import net.dv8tion.jda.core.events.channel.text.update.TextChannelUpdateNSFWEvent;
@@ -73,8 +79,6 @@ public class ChannelListener extends ListenerAdapter {
 			return;
 		}
 		
-		
-		
 		if(event instanceof VoiceChannelCreateEvent) {
 			Hub.createChannel(event.getChannel());
 		}
@@ -102,6 +106,31 @@ public class ChannelListener extends ListenerAdapter {
 			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.PARENT);
 		}
 
+	}
+	
+	
+	@Override
+	public void onGenericCategory(GenericCategoryEvent event) {
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
+		
+		if(event instanceof CategoryCreateEvent) {
+			Hub.createChannel(event.getCategory());
+		}
+		else if(event instanceof CategoryDeleteEvent) {
+			Hub.deleteChannel(event.getCategory());
+		}
+				
+		else if(event instanceof CategoryUpdateNameEvent) {
+			Hub.updateChannel(event.getCategory(), ChannelUpdateAction.NAME);
+		}
+		else if(event instanceof CategoryUpdatePositionEvent) {
+			Hub.updateChannel(event.getCategory(), ChannelUpdateAction.POSITION);
+		}
+		else if(event instanceof CategoryUpdatePermissionsEvent) {
+			Hub.updateChannelPerms(event.getCategory(), ((CategoryUpdatePermissionsEvent) event).getChangedRoles());
+		}
 	}
 	
 	
