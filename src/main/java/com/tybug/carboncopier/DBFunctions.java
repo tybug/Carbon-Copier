@@ -150,6 +150,21 @@ public class DBFunctions {
 		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'CHANNELS' ('SOURCE', 'TARGET') VALUES (?, ?)");
 	}
 	
+
+	
+	
+	
+	/**
+	 * Links two categories
+	 * <p>
+	 * Inserts values (source, target) into the CATEGORIES table in the INFO database
+	 * @param source The source category id
+	 * @param target The target category id
+	 */
+	public static void linkCategory(String source, String target) {
+		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'CATEGORIES' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	}
+	
 	
 	
 	

@@ -254,9 +254,15 @@ public class Hub {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = targetGuild.getController().createCopyOfChannel(source).complete();
-		DBFunctions.linkChannel(source.getId(), target.getId());
+		
 
-		updateLinkedChannels();
+		if(source.getType().equals(ChannelType.CATEGORY)) {
+			DBFunctions.linkCategory(source.getId(), target.getId());
+			updateLinkedCategories(); 
+		} else {
+			DBFunctions.linkChannel(source.getId(), target.getId());
+			updateLinkedChannels();
+		}
 	}
 
 
@@ -400,6 +406,8 @@ public class Hub {
 		linkedChannels = DBFunctions.getLinkedChannels();
 	}
 
+	
+	
 	/**
 	 * Updates linkedGuilds
 	 * <p>
@@ -407,6 +415,16 @@ public class Hub {
 	 */
 	public static void updateLinkedGuilds() {
 		linkedGuilds = DBFunctions.getLinkedGuilds();
+	}
+	
+	
+	/**
+	 * Updates linkedCategories
+	 * <p>
+	 * Updates the cache stored in linkedCategories to the most recent version from the db
+	 */
+	public static void updateLinkedCategories() {
+		linkedCategories = DBFunctions.getLinkedCategories();
 	}
 
 
