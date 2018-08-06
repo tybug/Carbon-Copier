@@ -18,6 +18,7 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 public class MessageListener extends ListenerAdapter {
@@ -84,6 +85,21 @@ public class MessageListener extends ListenerAdapter {
 		
         Hub.sendMessage(jda, profileURL, username, content, attachments, timestamp, messageID, channelID, guildID);
     }
+	
+	
+
+	@Override 
+    public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
+		JDA jda = event.getJDA();
+		String messageID = event.getMessageId();
+		String userID = event.getUser().getId();
+		String channelID = event.getChannel().getId();
+		
+        Hub.updateReactions(jda, messageID, userID, channelID);
+	}
 	
 	@Override
 	public void onMessageUpdate(MessageUpdateEvent event) {
