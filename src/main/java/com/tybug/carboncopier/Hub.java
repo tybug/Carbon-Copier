@@ -25,6 +25,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
+import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
@@ -68,6 +69,34 @@ public class Hub {
 	}
 
 
+	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID) {
+		DBFunctions.linkGuild(sourceID, targetID);
+		Guild source = jda.getGuildById(sourceID);
+		Guild target = jda.getGuildById(targetID);
+		
+		for(Category category : source.getCategories()) {
+			Hub.createChannel(category);
+		}
+		for(TextChannel text : source.getTextChannels()) {
+			Hub.createChannel(text);
+		}
+		for(VoiceChannel voice : source.getVoiceChannels()) {
+			Hub.createChannel(voice);
+		}
+		
+		for(Role r : source.getRoles()) {
+			Hub.createRole(r);
+		}		
+		
+		
+		channel.sendMessage("Linked `" + source.getName() +"` to `" + target.getName() + "`").queue();
+		Hub.updateLinkedGuilds(); // Update our cache
+	}
+	
+	
+	
+	
+	
 	public static void sendMessage(JDA jda, String profileURL, String username, String content, 
 			List<Attachment> attachments, OffsetDateTime timestamp, String messageID, String channelID, String guildID) {
 

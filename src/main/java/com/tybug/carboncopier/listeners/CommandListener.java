@@ -3,7 +3,6 @@ package com.tybug.carboncopier.listeners;
 import com.tybug.carboncopier.DBFunctions;
 import com.tybug.carboncopier.Hub;
 
-import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
@@ -25,13 +24,8 @@ public class CommandListener extends ListenerAdapter {
 				return;
 			}
 			
-			DBFunctions.linkGuild(parts[1], parts[2]);
-			Guild source = event.getJDA().getGuildById(parts[1]);
-			Guild target = event.getJDA().getGuildById(parts[2]);
-			
-			event.getChannel().sendMessage("Linked `" + source.getName() +"` to `" + target.getName() + "`").queue();
-			Hub.updateLinkedGuilds(); // Update our cache
+			Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2]);
 		}
-		
 	}
+	
 }
