@@ -33,5 +33,7 @@ public class CommandListener extends ListenerAdapter {
 			Hub.updateLinkedGuilds(); // Update our cache
 		}
 		
+		
+		
 	}
 }

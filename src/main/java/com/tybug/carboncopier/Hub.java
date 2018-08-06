@@ -2,10 +2,7 @@ package com.tybug.carboncopier;
 
 import java.awt.Color;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -18,6 +15,7 @@ import com.tybug.carboncopier.listeners.ChannelUpdateAction;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
+import net.dv8tion.jda.core.entities.Category;
 import net.dv8tion.jda.core.entities.Channel;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
@@ -47,8 +45,12 @@ public class Hub {
 
 	
 	private static List<String> targetGuilds = null;
-	private static HashMap<String, String> linkedChannels = null;
+	
 	private static HashMap<String, String> linkedGuilds = null;
+	private static HashMap<String, String> linkedCategories = null;
+	private static HashMap<String, String> linkedChannels = null;
+
+	
 
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
@@ -58,8 +60,11 @@ public class Hub {
 
 	public static void setup() {
 		targetGuilds = DBFunctions.getTargetGuilds();
-		linkedChannels = DBFunctions.getLinkedChannels();
+		
 		linkedGuilds = DBFunctions.getLinkedGuilds();
+		linkedCategories = DBFunctions.getLinkedCategories();
+		linkedChannels = DBFunctions.getLinkedChannels();
+		
 	}
 
 
@@ -256,7 +261,7 @@ public class Hub {
 			break;
 			
 		case POSITION:
-			// TODO figure out how position works with categories
+			manager.setPosition(source.getPosition()).queue();
 			break;
 			
 		case NSFW:
@@ -264,7 +269,15 @@ public class Hub {
 			break;
 			
 		case PARENT:
-			// TODO get linked category
+			Category parent = source.getParent();
+			if(parent == null) {
+				manager.setParent(null).queue();
+			} 
+			
+			else {
+				manager.setParent(targetGuild.getCategoryById(linkedCategories.get(parent.getId()))).queue();
+			}
+			
 			break;
 		}
 	}
@@ -354,7 +367,7 @@ public class Hub {
 
 	
 	/**
-	 * Parses a human readable time
+	 * Parses to human readable time
 	 * <p>
 	 * Given an OffsetDateTime object, returns a String in the form M/dd/yyyy h:mm a (as specified by SimpleDateFormat)
 	 * <p>
@@ -367,29 +380,6 @@ public class Hub {
 		Date date = Date.from(timestamp.toInstant());
 		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
 		return format.format(date);
-//		
-//		LocalDateTime local = LocalDateTime.from(timestamp);
-//		
-//		ZoneId zoneId = ZoneId.of("America/New_York");
-//		ZonedDateTime est = ZonedDateTime.of(local, zoneId);
-//		
-//		int monthVal = est.getMonthValue();
-//		String month = String.valueOf(monthVal);
-//		
-//		int dayVal = est.getDayOfMonth();
-//		String day = (monthVal > 10 ? String.valueOf(dayVal) : "0" + String.valueOf(dayVal));
-//		
-//		int yearVal = est.getDayOfYear();
-//		String year = String.valueOf(yearVal);
-//		
-//		int hourVal = est.getHour();
-//		String hour = (hourVal > 10 ? String.valueOf(hourVal) : "0" + String.valueOf(hourVal));
-//		
-//		int minuteVal = est.getMinute();
-//		String minute = (minuteVal > 10 ? String.valueOf(minuteVal) : "0" + String.valueOf(minuteVal));
-//		
-//		
-//		return  month + "/" + day + "/" + year + " " + hour + ":" + minute;
 	}
 
 

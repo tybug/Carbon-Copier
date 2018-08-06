@@ -28,14 +28,13 @@ public class MessageListener extends ListenerAdapter {
 		if(event.getMessage().getContentDisplay().startsWith("!info")) {
 			
 			
-			
 			Guild guild = event.getJDA().getGuildById("475139498506715136");
 			EmbedBuilder builder = new EmbedBuilder();
 	        builder.setTitle("Server Info for " + guild.getName());
 	        builder.setColor(Color.green);
 	        StringBuilder sb = new StringBuilder();
 	        for(TextChannel c : guild.getTextChannels()) {
-	            sb.append(c.getName().substring(0, 1).toUpperCase() + c.getName().substring(1) + " - " + c.getId() + "\n");
+	            sb.append(c.getName().substring(0, 1).toUpperCase() + c.getName().substring(1) + " - " + c.getId() + " - position " + c.getPositionRaw() + "\n");
 	        }
 	        builder.addField("Text Channels", sb.toString(), false);
 
@@ -46,6 +45,20 @@ public class MessageListener extends ListenerAdapter {
 	        builder.addField("Roles", sb.toString(), false);
 	        guild.getTextChannelById("475476543343165450").sendMessage(builder.build()).queue();
 
+		}
+		
+		
+		else if (event.getMessage().getContentDisplay().startsWith("!test")) {
+			
+			Guild guild = event.getJDA().getGuildById("475139498506715136");
+			guild.getTextChannelById("475139498506715138").getManager().setPosition(3).queue();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			guild.getTextChannelById("475139498506715138").getManager().setParent(null).queue();
+			
 		}
 		
 		if(Hub.isTargetGuild(event.getGuild().getId())) {

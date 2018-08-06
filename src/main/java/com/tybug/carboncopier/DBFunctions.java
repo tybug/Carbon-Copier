@@ -22,6 +22,26 @@ public class DBFunctions {
 	
 	
 	
+	/**
+	 * @return {@literal HashMap<String, String> } <br>
+	 * For each linked guild: <br>
+	 * [SOURCE ID :: TARGET ID]
+	 */
+	public static HashMap<String, String> getLinkedGuilds(){
+		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'GUILDS'");
+	}
+	
+	
+	
+	/**
+	 * @return {@literal HashMap<String, String> } <br>
+	 * For each linked text channel: <br>
+	 * [SOURCE ID :: TARGET ID]
+	 */
+	public static HashMap<String, String> getLinkedCategories() {
+		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'CATEGORIES'");
+	}
+	
 	
 	
 	/**
@@ -34,14 +54,7 @@ public class DBFunctions {
 	}
 	
 	
-	/**
-	 * @return {@literal HashMap<String, String> } <br>
-	 * For each linked guild: <br>
-	 * [SOURCE ID :: TARGET ID]
-	 */
-	public static HashMap<String, String> getLinkedGuilds(){
-		return getMapFromDatabase("info", new String[] {"SOURCE", "TARGET"}, "SELECT * from 'GUILDS'");
-	}
+	
 	
 	/**
 	 * @return {@literal HashMap<String, String> } <br>
