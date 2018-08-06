@@ -17,7 +17,7 @@ public class CommandListener extends ListenerAdapter {
 		
 		
 		String content = event.getMessage().getContentRaw();
-		if(content.equals("!link")) {
+		if(content.startsWith("!link")) {
 			String[] parts = content.split(" ");
 			if(parts.length != 3) {
 				event.getChannel().sendMessage("!link [source] [target]").queue();
