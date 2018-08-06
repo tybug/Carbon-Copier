@@ -36,7 +36,7 @@ public class CarbonCopier {
 			JDA jda = new JDABuilder(AccountType.BOT) 
 					.setToken(token) //pass the token (loaded from an ignored file, this time)
 					.addEventListener(new MessageListener(), new RoleListener(), new ChannelListener(), new CommandListener()) // add all the listeners
-					.setGame(Game.playing("Created by Liam")) //set "Playing..." display message
+					.setGame(Game.playing("Backing up your server")) //set "Playing..." display message
 					.buildBlocking();  //build the whole thing, blocking guarantees it will be completely loaded vs async which does not
 			
 			Hub.setup();

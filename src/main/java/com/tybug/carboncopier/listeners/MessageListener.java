@@ -21,7 +21,7 @@ public class MessageListener extends ListenerAdapter {
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 		
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		JDA jda = event.getJDA();
@@ -48,7 +48,7 @@ public class MessageListener extends ListenerAdapter {
 
 	@Override 
     public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		JDA jda = event.getJDA();
@@ -61,7 +61,7 @@ public class MessageListener extends ListenerAdapter {
 	
 	@Override
 	public void onMessageUpdate(MessageUpdateEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		
@@ -76,7 +76,7 @@ public class MessageListener extends ListenerAdapter {
 	
 	@Override
 	public void onMessageDelete(MessageDeleteEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		

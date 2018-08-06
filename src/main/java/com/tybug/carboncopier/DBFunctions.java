@@ -68,10 +68,10 @@ public class DBFunctions {
 	
 	
 	/**
-	 * @return {@literal List<String> } A list containing the ids of the target guilds
+	 * @return {@literal List<String> } A list containing the ids of the source guilds
 	 */
-	public static List<String> getTargetGuilds() {
-		return getListFromDatabase("info", "TARGET", "SELECT * FROM 'GUILDS'");
+	public static List<String> getSourceGuilds() {
+		return getListFromDatabase("info", "SOURCE", "SELECT * FROM 'GUILDS'");
 	}
 	
 	

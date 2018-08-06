@@ -31,7 +31,7 @@ public class ChannelListener extends ListenerAdapter {
 
 	@Override
 	public void onGenericTextChannel(GenericTextChannelEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 
@@ -75,7 +75,7 @@ public class ChannelListener extends ListenerAdapter {
 
 	public void onGenericVoiceChannel(GenericVoiceChannelEvent event) {
 
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		
@@ -111,7 +111,7 @@ public class ChannelListener extends ListenerAdapter {
 	
 	@Override
 	public void onGenericCategory(GenericCategoryEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		

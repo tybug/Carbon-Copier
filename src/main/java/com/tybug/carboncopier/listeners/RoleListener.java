@@ -13,7 +13,7 @@ public class RoleListener extends ListenerAdapter {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void onGenericRoleUpdate(GenericRoleUpdateEvent event) {	
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		Hub.updateRole(event.getRole());
@@ -23,7 +23,7 @@ public class RoleListener extends ListenerAdapter {
 	
 	@Override
 	public void onRoleCreate(RoleCreateEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		Hub.createRole(event.getRole());
@@ -33,7 +33,7 @@ public class RoleListener extends ListenerAdapter {
 	
 	@Override
 	public void onRoleDelete(RoleDeleteEvent event) {
-		if(Hub.isTargetGuild(event.getGuild().getId())) {
+		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		Hub.deleteRole(event.getRole());

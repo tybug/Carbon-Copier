@@ -47,7 +47,7 @@ import net.dv8tion.jda.core.managers.GuildController;
 public class Hub {
 
 
-	private static List<String> targetGuilds = null;
+	private static List<String> sourceGuilds = null;
 
 	private static HashMap<String, String> linkedGuilds = null;
 	private static HashMap<String, String> linkedCategories = null;
@@ -61,7 +61,7 @@ public class Hub {
 	private static final Color COLOR_DELETE = Color.decode("#ff2a00");
 
 	public static void setup() {
-		targetGuilds = DBFunctions.getTargetGuilds();
+		sourceGuilds = DBFunctions.getSourceGuilds();
 
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 		linkedCategories = DBFunctions.getLinkedCategories();
@@ -457,8 +457,8 @@ public class Hub {
 	}
 
 
-	public static boolean isTargetGuild(String id) {
-		if(targetGuilds.contains(id)) {
+	public static boolean isSourceGuild(String id) {
+		if(sourceGuilds.contains(id)) {
 			return true;
 		}
 
