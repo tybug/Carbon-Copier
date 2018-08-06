@@ -166,6 +166,7 @@ public class DBFunctions {
 	
 	
 	
+	
 	/**
 	 * Modifies a pre-existing link between two roles
 	 * <p>
@@ -179,8 +180,29 @@ public class DBFunctions {
 	
 	
 	
-	public static void deleteRoleLink(String source) {
+	
+	/**
+	 * Deletes the link between two roles
+	 * <p>
+	 * Deletes the entry in the ROLES table where the value of SOURCE is the passed source id
+	 * @param source The id of the source role
+	 */
+	public static void removeRoleLink(String source) {
 		modifyDatabase("info", Arrays.asList(source), "DELETE FROM `ROLES` WHERE `SOURCE` = ?");
+	}
+	
+	
+	
+	
+	
+	/**
+	 * Deletes the link between two channels
+	 * <p>
+	 * Deletes the entry in the CHANNELS table where the value of SOURCE is the passed source id
+	 * @param source The id of the source channel
+	 */
+	public static void removeChannelLink(String source) {
+		modifyDatabase("info", Arrays.asList(source), "DELETE FROM `CHANNELS` WHERE `SOURCE` = ?");
 	}
 	
 	

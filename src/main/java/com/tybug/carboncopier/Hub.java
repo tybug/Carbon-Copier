@@ -17,6 +17,7 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Category;
 import net.dv8tion.jda.core.entities.Channel;
+import net.dv8tion.jda.core.entities.ChannelType;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
@@ -27,6 +28,7 @@ import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.entities.VoiceChannel;
 import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.managers.GuildController;
 
@@ -38,19 +40,18 @@ import net.dv8tion.jda.core.managers.GuildController;
  * Methods recieve as little information as possible, and do a bit more leg work than they otherwise would have to regain references to guilds, textchannels, etc. 
  * <p>
  * This is both so that references to objects with large caches (guilds, jda) don't live as long, and to create an artificial barrier between Listeners (which deal with 
- * the events) and the Hub, where ids are the primary dealing.
+ * the events) and the Hub (which deals primarily with ids)
  * @author Liam DeVoe
  */
 public class Hub {
 
-	
+
 	private static List<String> targetGuilds = null;
-	
+
 	private static HashMap<String, String> linkedGuilds = null;
 	private static HashMap<String, String> linkedCategories = null;
 	private static HashMap<String, String> linkedChannels = null;
 
-	
 
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
@@ -60,11 +61,10 @@ public class Hub {
 
 	public static void setup() {
 		targetGuilds = DBFunctions.getTargetGuilds();
-		
+
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 		linkedCategories = DBFunctions.getLinkedCategories();
 		linkedChannels = DBFunctions.getLinkedChannels();
-		
 	}
 
 
@@ -73,7 +73,6 @@ public class Hub {
 
 		Guild guild = jda.getGuildById(guildID);
 		TextChannel channel = jda.getTextChannelById(linkedChannels.get(channelID));
-
 
 
 		EmbedBuilder eb = new EmbedBuilder();
@@ -91,15 +90,12 @@ public class Hub {
 			jda.getUserById("216008405758771200").openPrivateChannel().complete()
 			.sendMessage("wtf someone sent more than one attachment in a message fucking fix it pls").queue();
 		} 
-		
+
 		eb.setColor(COLOR_MESSAGE);
 
 		String target = channel.sendMessage(eb.build()).complete().getId();
 
-
-
-
-
+		
 		DBFunctions.linkMessage(messageID, target);
 
 	}
@@ -119,21 +115,21 @@ public class Hub {
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
 		eb.setDescription(sourceMessage.getContentRaw());
 		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(sourceMessage.getEditedTime()) + ")", embed.getFooter().getIconUrl());
-		
+
 		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
-		
+
 		List<Field> fields = embed.getFields();
 		if(fields.size() > 0) {
 			eb.addField(embed.getFields().get(0));
 		}
-		
+
 		targetMessage.editMessage(eb.build()).queue();
 	}
 
 
-	
-	
-	
+
+
+
 
 	public static void updateReactions(JDA jda, String messageID, String userID, String channelID) {
 
@@ -142,11 +138,11 @@ public class Hub {
 
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(sourceMessage.getId())).complete();
-		
+
 		HashMap<String, List<String>> emojis = new HashMap<String, List<String>>();
-		
+
 		for(MessageReaction mr : sourceMessage.getReactions()) {
-			
+
 			String reactionCode;
 			ReactionEmote reaction = mr.getReactionEmote();
 			if(reaction.isEmote()) {
@@ -155,16 +151,16 @@ public class Hub {
 				reactionCode = reaction.getName(); // if it is a default, unicode reaction
 			}
 			emojis.put(reactionCode, new ArrayList<String>());
-			
+
 			List<String> users = emojis.get(reactionCode);
 			for(User u : mr.getUsers().complete()){
 				users.add(u.getAsMention());
 			}
 		}
-		
+
 		EmbedBuilder eb = new EmbedBuilder();
 		MessageEmbed embed = targetMessage.getEmbeds().get(0);
-		
+
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
 		eb.setDescription(sourceMessage.getContentRaw());
 		eb.setFooter(embed.getFooter().getText(), embed.getFooter().getIconUrl());
@@ -174,34 +170,32 @@ public class Hub {
 			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")));
 			sb.append("\n");
 		}
-		
-		
+
+
 		eb.addField("Reactions", sb.toString(), false);
 		eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		targetMessage.editMessage(eb.build()).queue();
-
-
 	}
-	
-	
-	
+
+
+
 	public static void updateRole(Role source) {
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		GuildController targetController = targetGuild.getController();
-		
+
 		targetGuild.getRoleById(DBFunctions.getLinkedRole(source.getId())).delete().complete(); 
 		//make sure we delete if before we make a new one with potentially the same name
-		
+
 		Role target = targetController.createCopyOfRole(source).complete();
 
 		targetController.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
-		
+
 		DBFunctions.updateRoleLink(source.getId(), target.getId());
 	}
 
-	
+
 	public static void createRole(Role source) {
 
 		int pos = source.getPosition();
@@ -209,42 +203,59 @@ public class Hub {
 		Guild sourceGuild = source.getGuild();
 
 		GuildController targetController = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
-		
+
 		Role target = targetController.createCopyOfRole(source).complete();
 		target.getManager().setColor(Role.DEFAULT_COLOR_RAW).queue(); // It doesn't have the default color when copied for some reason
 		targetController.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
-		
-		
+
+
 		DBFunctions.linkRole(source.getId(), target.getId());
-		
-		
 	}
-	
-	
-	
+
+
+
 	public static void deleteRole(Role source) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
-		
+
 		targetGuild.getRoleById(DBFunctions.getLinkedRole(source.getId())).delete().complete();
-		DBFunctions.deleteRoleLink(source.getId());
-		
+		DBFunctions.removeRoleLink(source.getId());
+
 	}
-	
-	
-	
-	
-	
-	public static void createTextChannel(TextChannel source) {
+
+
+
+
+
+	public static void createChannel(Channel source) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = targetGuild.getController().createCopyOfChannel(source).complete();
 		DBFunctions.linkChannel(source.getId(), target.getId());
-		
+
 		updateLinkedChannels();
 	}
 	
 	
+	public static void deleteChannel(Channel source) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		Channel target = null;
+		if(source.getType().equals(ChannelType.TEXT)) {
+			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		}
+		
+		else if (source.getType().equals(ChannelType.VOICE)) {
+			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
+		}
+		target.delete().queue();
+		
+		DBFunctions.removeChannelLink(source.getId());
+	}
+
+	
+	
+
 	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -252,55 +263,111 @@ public class Hub {
 		ChannelManager manager = target.getManager();
 		
 		switch(action) {
-		case NAME:
-			manager.setName(source.getName()).queue();
-			break;
-			
 		case TOPIC:
 			manager.setTopic(source.getTopic()).queue();
 			break;
-			
-		case POSITION:
-			manager.setPosition(source.getPosition()).queue();
-			break;
-			
 		case NSFW:
 			manager.setNSFW(source.isNSFW()).queue();
 			break;
-			
-		case PARENT:
-			Category parent = source.getParent();
-			if(parent == null) {
-				manager.setParent(null).queue();
-			} 
-			
-			else {
-				manager.setParent(targetGuild.getCategoryById(linkedCategories.get(parent.getId()))).queue();
-			}
-			
+		default:
 			break;
 		}
 	}
 	
 	
-	public static void updateChannelPerms(Channel source, Collection<Role> roles) {
+	
+	public static void updateVoiceChannel(VoiceChannel source, ChannelUpdateAction action) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
-		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		VoiceChannel target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
 		ChannelManager manager = target.getManager();
 		
-		for(Role r : roles) {
+		switch(action) {
+		case USER_LIMIT:
+			manager.setUserLimit(source.getUserLimit()).queue();
+			break;
+		case BITRATE:
+			manager.setBitrate(source.getBitrate()).queue();
+			break;
+		default:
+			break;
+		}
+	}
+	
+	
+
+	public static void updateChannel(Channel source, ChannelUpdateAction action) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		Channel target = null;
+		
+		if(source.getType().equals(ChannelType.TEXT)) {
+			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		}
+		
+		else if (source.getType().equals(ChannelType.VOICE)) {
+			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
+		}
+		
+		ChannelManager manager = target.getManager();
+		
+		switch(action) {
+		case NAME:
+			manager.setName(source.getName()).queue();
+			break;
+
+		case POSITION:
+			manager.setPosition(source.getPosition()).queue();
+			break;
+
+		case PARENT:
+			Category parent = source.getParent();
+			if(parent == null) {
+				manager.setParent(null).queue();
+			} 
+			else {
+				manager.setParent(targetGuild.getCategoryById(linkedCategories.get(parent.getId()))).queue();
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	
+	
+
+	public static void updateChannelPerms(Channel source, Collection<Role> sourceRoles) {
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		Channel target = null;
+		
+		if(source.getType().equals(ChannelType.TEXT)) {
+			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
+		}
+		
+		else if (source.getType().equals(ChannelType.VOICE)) {
+			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
+		}
+		
+		ChannelManager manager = target.getManager();
+		
+		
+		// Convert source roles to target roles
+		Collection<Role> targetRoles = sourceRoles.stream().map(role -> targetGuild.getRoleById(DBFunctions.getLinkedRole(role.getId()))).collect(Collectors.toList());
+		
+		for(Role r : targetRoles) {
 			List<Permission> allowed = source.getPermissionOverride(r).getAllowed();
 			List<Permission> denied = source.getPermissionOverride(r).getDenied();
 
 			manager.putPermissionOverride(targetGuild.getRoleById(DBFunctions.getLinkedRole(r.getId())), allowed, denied).queue();
 		}
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	/**
 	 * Updates linkedChannels
 	 * <p>
@@ -309,7 +376,7 @@ public class Hub {
 	private static void updateLinkedChannels() {
 		linkedChannels = DBFunctions.getLinkedChannels();
 	}
-	
+
 	/**
 	 * Updates linkedGuilds
 	 * <p>
@@ -318,8 +385,8 @@ public class Hub {
 	public static void updateLinkedGuilds() {
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 	}
-	
-	
+
+
 	public static boolean isTargetGuild(String id) {
 		if(targetGuilds.contains(id)) {
 			return true;
@@ -327,20 +394,20 @@ public class Hub {
 
 		return false;
 	}
-	
-	
-	
-	
+
+
+
+
 	private static Color compareColors(Color c1, Color c2) {
 		if(getColorPriority(c1) > getColorPriority(c2)) {
 			return c1;
 		}
-		
+
 		return c2;
-		
+
 	}
-	
-	
+
+
 	/**
 	 * Determines the priority of the given color
 	 * <p>
@@ -354,18 +421,18 @@ public class Hub {
 	 */
 	private static int getColorPriority(Color c) {
 		int rgb = c.getRGB();
-		
+
 		if(rgb == COLOR_MESSAGE.getRGB()) return 1;
 		if(rgb == COLOR_REACT.getRGB()) return 2;
 		if(rgb == COLOR_EDIT.getRGB()) return 3;
 		if(rgb == COLOR_DELETE.getRGB()) return 4;
-		
+
 		return 0;
 
 	}
 
 
-	
+
 	/**
 	 * Parses to human readable time
 	 * <p>

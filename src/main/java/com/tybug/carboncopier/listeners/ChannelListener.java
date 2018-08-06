@@ -31,7 +31,7 @@ public class ChannelListener extends ListenerAdapter {
 
 
 		if(event instanceof TextChannelCreateEvent) {
-			Hub.createTextChannel(event.getChannel());
+			Hub.createChannel(event.getChannel());
 		}
 
 		//		else if(event instanceof TextChannelDeleteEvent) {
@@ -41,13 +41,13 @@ public class ChannelListener extends ListenerAdapter {
 
 		
 		else if(event instanceof TextChannelUpdateNameEvent) {
-			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.NAME);
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.NAME);
 		}
 		else if(event instanceof TextChannelUpdateTopicEvent) {
 			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.TOPIC);
 		}
 		else if(event instanceof TextChannelUpdatePositionEvent) {
-			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.POSITION);
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.POSITION);
 		}
 		else if(event instanceof TextChannelUpdatePermissionsEvent) {
 			Hub.updateChannelPerms(event.getChannel(), ((TextChannelUpdatePermissionsEvent) event).getChangedRoles());
@@ -56,7 +56,7 @@ public class ChannelListener extends ListenerAdapter {
 			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.NSFW);
 		}
 		else if(event instanceof TextChannelUpdateParentEvent) {
-			Hub.updateTextChannel(event.getChannel(), ChannelUpdateAction.PARENT);
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.PARENT);
 		}
 
 	}
@@ -69,31 +69,37 @@ public class ChannelListener extends ListenerAdapter {
 
 	public void onGenericVoiceChannel(GenericVoiceChannelEvent event) {
 
+		if(Hub.isTargetGuild(event.getGuild().getId())) {
+			return;
+		}
+		
+		
+		
 		if(event instanceof VoiceChannelCreateEvent) {
-
+			Hub.createChannel(event.getChannel());
 		}
 		else if(event instanceof VoiceChannelDeleteEvent) {
-
+			Hub.deleteChannel(event.getChannel());
 		}
 		
 		
 		else if(event instanceof VoiceChannelUpdateNameEvent) {
-
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.NAME);
 		}
 		else if(event instanceof VoiceChannelUpdatePositionEvent) {
-
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.POSITION);
 		}
 		else if(event instanceof VoiceChannelUpdateUserLimitEvent) {
-
+			Hub.updateVoiceChannel(event.getChannel(), ChannelUpdateAction.USER_LIMIT);
 		}
 		else if(event instanceof VoiceChannelUpdateBitrateEvent) {
-
+			Hub.updateVoiceChannel(event.getChannel(), ChannelUpdateAction.BITRATE);
 		}
 		else if(event instanceof VoiceChannelUpdatePermissionsEvent) {
-
+			Hub.updateChannelPerms(event.getChannel(), ((VoiceChannelUpdatePermissionsEvent) event).getChangedRoles());
 		}
 		else if(event instanceof VoiceChannelUpdateParentEvent) {
-
+			Hub.updateChannel(event.getChannel(), ChannelUpdateAction.PARENT);
 		}
 
 	}
