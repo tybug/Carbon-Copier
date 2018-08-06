@@ -1,9 +1,14 @@
 package com.tybug.carboncopier;
 
 import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +32,17 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.managers.GuildController;
 
+
+/**
+ * Where Listeners send information so events can be replicated on the target guild.
+ * <p>
+ * A note on style: <br>
+ * Methods recieve as little information as possible, and do a bit more leg work than they otherwise would have to regain references to guilds, textchannels, etc. 
+ * <p>
+ * This is both so that references to objects with large caches (guilds, jda) don't live as long, and to create an artificial barrier between Listeners (which deal with 
+ * the events) and the Hub, where ids are the primary dealing.
+ * @author Liam DeVoe
+ */
 public class Hub {
 
 	
@@ -311,6 +327,18 @@ public class Hub {
 		
 	}
 	
+	
+	/**
+	 * Determines the priority of the given color
+	 * <p>
+	 * In the context of embeds for sent messages, this determines which color should be displayed when a message has been both reacted to and edited, for example.
+	 * The color with the higher priority will be displayed. No two states have the same priority.
+	 * <p>
+	 * If the passed color is not one of the special embed colors, the priority is returned as zero.
+	 * 
+	 * @param c The color
+	 * @return The priority of this color
+	 */
 	private static int getColorPriority(Color c) {
 		int rgb = c.getRGB();
 		
@@ -325,9 +353,43 @@ public class Hub {
 
 
 	
-
+	/**
+	 * Parses a human readable time
+	 * <p>
+	 * Given an OffsetDateTime object, returns a String in the form M/dd/yyyy h:mm a (as specified by SimpleDateFormat)
+	 * <p>
+	 * EX: 8/05/2018 10:23 PM
+	 * 
+	 * @param timestamp The timestamp
+	 * @return The parsed date
+	 */
 	private static String parseTime(OffsetDateTime timestamp) {
-		return timestamp.getMonthValue() + "/" + timestamp.getDayOfMonth() + "/" + timestamp.getYear() + " " + timestamp.getHour() + ":" + timestamp.getMinute();
+		Date date = Date.from(timestamp.toInstant());
+		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
+		return format.format(date);
+//		
+//		LocalDateTime local = LocalDateTime.from(timestamp);
+//		
+//		ZoneId zoneId = ZoneId.of("America/New_York");
+//		ZonedDateTime est = ZonedDateTime.of(local, zoneId);
+//		
+//		int monthVal = est.getMonthValue();
+//		String month = String.valueOf(monthVal);
+//		
+//		int dayVal = est.getDayOfMonth();
+//		String day = (monthVal > 10 ? String.valueOf(dayVal) : "0" + String.valueOf(dayVal));
+//		
+//		int yearVal = est.getDayOfYear();
+//		String year = String.valueOf(yearVal);
+//		
+//		int hourVal = est.getHour();
+//		String hour = (hourVal > 10 ? String.valueOf(hourVal) : "0" + String.valueOf(hourVal));
+//		
+//		int minuteVal = est.getMinute();
+//		String minute = (minuteVal > 10 ? String.valueOf(minuteVal) : "0" + String.valueOf(minuteVal));
+//		
+//		
+//		return  month + "/" + day + "/" + year + " " + hour + ":" + minute;
 	}
 
 
