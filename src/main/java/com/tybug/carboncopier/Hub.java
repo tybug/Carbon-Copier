@@ -118,7 +118,31 @@ public class Hub {
 
 		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
 
-		List<Field> fields = embed.getFields();
+		List<Field> fields = embed.getFields(); // For the reaction field, if applicable
+		if(fields.size() > 0) {
+			eb.addField(embed.getFields().get(0));
+		}
+
+		targetMessage.editMessage(eb.build()).queue();
+	}
+	
+	
+	public static void deleteMessage(JDA jda, String messageID, String channelID) {
+		
+		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
+
+		EmbedBuilder eb = new EmbedBuilder();
+		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
+
+		MessageEmbed embed = targetMessage.getEmbeds().get(0);
+
+		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
+		eb.setDescription("~~" + targetMessage.getContentRaw() + "~~");
+		eb.setFooter(embed.getFooter().getText() + " (Deleted ~" + parseTime(OffsetDateTime.now()) + ")", embed.getFooter().getIconUrl());
+
+		eb.setColor(compareColors(COLOR_DELETE, embed.getColor()));
+
+		List<Field> fields = embed.getFields(); // For the reaction field, if applicable
 		if(fields.size() > 0) {
 			eb.addField(embed.getFields().get(0));
 		}
