@@ -7,12 +7,21 @@ Currently supported events:
 ##### Messages
 * MessageReceivedEvent
 * MessageUpdateEvent
+* MessageDeleteEvent
 * GuildMessageReactionAddEvent
 
 ##### Roles
 * GenericRoleUpdateEvent
 * RoleCreateEvent
 * RoleDeleteEvent
+
+
+##### Categories
+* CategoryCreateEvent
+* CategoryDeleteEvent
+* CategoryUpdateNameEvent
+* CategoryUpdatePositionEvent
+* CategoryUpdatePermissionsEvent
 
 ##### Text Channels
 * TextChannelCreateEvent
