@@ -10,6 +10,7 @@ import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
+import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -22,7 +23,6 @@ public class MessageListener extends ListenerAdapter {
 
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
-		
 		
 		// temporary for debugging linked ids etc
 		if(event.getMessage().getContentDisplay().startsWith("!info")) {
@@ -76,6 +76,10 @@ public class MessageListener extends ListenerAdapter {
 		String messageID = message.getId();
 		String channelID = event.getChannel().getId();
 		String guildID = event.getGuild().getId();
+		
+		if(message.getType().equals(MessageType.GUILD_MEMBER_JOIN)) {
+			content = author.getAsMention() + " joined the guild!";
+		}
 		
         Hub.sendMessage(jda, profileURL, username, content, attachments, timestamp, messageID, channelID, guildID);
     }
