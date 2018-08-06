@@ -95,14 +95,13 @@ public class Hub {
 
 		String target = channel.sendMessage(eb.build()).complete().getId();
 
-		
+
 		DBFunctions.linkMessage(messageID, target);
 
 	}
 
 
 	public static void editMessage(JDA jda, String messageID, String channelID) {
-
 		TextChannel sourceChannel = jda.getTextChannelById(channelID);
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 
@@ -125,10 +124,10 @@ public class Hub {
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
-	
-	
+
+
 	public static void deleteMessage(JDA jda, String messageID, String channelID) {
-		
+
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 
 		EmbedBuilder eb = new EmbedBuilder();
@@ -137,7 +136,7 @@ public class Hub {
 		MessageEmbed embed = targetMessage.getEmbeds().get(0);
 
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
-		eb.setDescription("~~" + targetMessage.getContentRaw() + "~~");
+		eb.setDescription("~~" + targetMessage.getEmbeds().get(0).getDescription() + "~~");
 		eb.setFooter(embed.getFooter().getText() + " (Deleted ~" + parseTime(OffsetDateTime.now()) + ")", embed.getFooter().getIconUrl());
 
 		eb.setColor(compareColors(COLOR_DELETE, embed.getColor()));
@@ -259,8 +258,8 @@ public class Hub {
 
 		updateLinkedChannels();
 	}
-	
-	
+
+
 	public static void deleteChannel(Channel source) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -268,24 +267,24 @@ public class Hub {
 		if(source.getType().equals(ChannelType.TEXT)) {
 			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
 		}
-		
+
 		else if (source.getType().equals(ChannelType.VOICE)) {
 			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
 		}
 		target.delete().queue();
-		
+
 		DBFunctions.removeChannelLink(source.getId());
 	}
 
-	
-	
+
+
 
 	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
 		ChannelManager manager = target.getManager();
-		
+
 		switch(action) {
 		case TOPIC:
 			manager.setTopic(source.getTopic()).queue();
@@ -297,15 +296,15 @@ public class Hub {
 			break;
 		}
 	}
-	
-	
-	
+
+
+
 	public static void updateVoiceChannel(VoiceChannel source, ChannelUpdateAction action) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		VoiceChannel target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
 		ChannelManager manager = target.getManager();
-		
+
 		switch(action) {
 		case USER_LIMIT:
 			manager.setUserLimit(source.getUserLimit()).queue();
@@ -317,24 +316,24 @@ public class Hub {
 			break;
 		}
 	}
-	
-	
+
+
 
 	public static void updateChannel(Channel source, ChannelUpdateAction action) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
-		
+
 		if(source.getType().equals(ChannelType.TEXT)) {
 			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
 		}
-		
+
 		else if (source.getType().equals(ChannelType.VOICE)) {
 			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
 		}
-		
+
 		ChannelManager manager = target.getManager();
-		
+
 		switch(action) {
 		case NAME:
 			manager.setName(source.getName()).queue();
@@ -358,28 +357,28 @@ public class Hub {
 		}
 	}
 
-	
-	
+
+
 
 	public static void updateChannelPerms(Channel source, Collection<Role> sourceRoles) {
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
-		
+
 		if(source.getType().equals(ChannelType.TEXT)) {
 			target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
 		}
-		
+
 		else if (source.getType().equals(ChannelType.VOICE)) {
 			target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
 		}
-		
+
 		ChannelManager manager = target.getManager();
-		
-		
+
+
 		// Convert source roles to target roles
 		Collection<Role> targetRoles = sourceRoles.stream().map(role -> targetGuild.getRoleById(DBFunctions.getLinkedRole(role.getId()))).collect(Collectors.toList());
-		
+
 		for(Role r : targetRoles) {
 			List<Permission> allowed = source.getPermissionOverride(r).getAllowed();
 			List<Permission> denied = source.getPermissionOverride(r).getDenied();
