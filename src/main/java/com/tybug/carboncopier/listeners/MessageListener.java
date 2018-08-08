@@ -24,6 +24,7 @@ public class MessageListener extends ListenerAdapter {
 		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
+		
 		JDA jda = event.getJDA();
 		User author = event.getAuthor();
 		Message message = event.getMessage();

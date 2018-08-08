@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
+import net.dv8tion.jda.core.entities.PermissionOverride;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -54,6 +56,8 @@ public class Hub {
 	private static HashMap<String, String> linkedChannels = null;
 
 
+	private static final int ROLE_OFFSET = 1; //how many roles are above the carbon copied roles
+	
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
 	private static final Color COLOR_REACT = Color.decode("#f9c131");
@@ -71,8 +75,17 @@ public class Hub {
 
 	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID) {
 		DBFunctions.linkGuild(sourceID, targetID);
+		Hub.updateLinkedGuilds(); // Update our cache BEFORE we create any channels so the id is there
 		Guild source = jda.getGuildById(sourceID);
 		Guild target = jda.getGuildById(targetID);
+		
+		
+		List<Role> roles = new ArrayList<Role>(source.getRoles()); // Make the list mutable so we can reverse it
+		// Reverse so when we create roles we create ones with lower position first and don't get "provided position is out of bounds"
+		Collections.reverse(roles);
+		for(Role r : roles) {
+			Hub.createRole(r);
+		}	
 		
 		for(Category category : source.getCategories()) {
 			Hub.createChannel(category);
@@ -84,13 +97,11 @@ public class Hub {
 			Hub.createChannel(voice);
 		}
 		
-		for(Role r : source.getRoles()) {
-			Hub.createRole(r);
-		}		
+			
 		
-		
+		Hub.updateSourceGuilds();
 		channel.sendMessage("Linked `" + source.getName() +"` to `" + target.getName() + "`").queue();
-		Hub.updateLinkedGuilds(); // Update our cache
+		
 	}
 	
 	
@@ -242,7 +253,7 @@ public class Hub {
 
 		Role target = targetController.createCopyOfRole(source).complete();
 
-		targetController.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
+		targetController.modifyRolePositions().selectPosition(target).moveTo(pos + ROLE_OFFSET).queue();
 
 		DBFunctions.updateRoleLink(source.getId(), target.getId());
 	}
@@ -257,9 +268,9 @@ public class Hub {
 		GuildController targetController = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
 
 		Role target = targetController.createCopyOfRole(source).complete();
-		target.getManager().setColor(Role.DEFAULT_COLOR_RAW).queue(); // It doesn't have the default color when copied for some reason
-		targetController.modifyRolePositions().selectPosition(target).moveTo(pos).queue();
-
+		target.getManager().setColor(source.getColorRaw()); // Not sure if #getColorRaw vs #getColor does anything, but I'm not taking chances
+		
+		targetController.modifyRolePositions().selectPosition(target).moveTo(pos + ROLE_OFFSET).queue();
 
 		DBFunctions.linkRole(source.getId(), target.getId());
 	}
@@ -280,11 +291,29 @@ public class Hub {
 
 
 	public static void createChannel(Channel source) {
+		
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = targetGuild.getController().createCopyOfChannel(source).complete();
 		
-
+		for(PermissionOverride override : source.getRolePermissionOverrides()) {
+			Role targetRole = targetGuild.getRoleById(DBFunctions.getLinkedRole(override.getRole().getId()));
+			target.getManager().putPermissionOverride(targetRole, override.getAllowed(), override.getDenied()).queue();
+		}
+		
+		// Public role (@everyone) not included in Channel#getRolePermissionOverrides, so we add it manually
+		PermissionOverride publicOverride = source.getPermissionOverride(sourceGuild.getPublicRole());
+		if(publicOverride != null) { // Null if no overrides on @everyone
+			target.getManager().putPermissionOverride(targetGuild.getPublicRole(), publicOverride.getAllowed(), publicOverride.getDenied()).queue();
+		}
+		
+		
+		if(source.getParent() != null) {
+			 // I never want to write something so disgusting in my life again
+			target.getManager().setParent(targetGuild.getCategoryById(linkedCategories.get(source.getParent().getId()))).queue();
+		}
+		
 		if(source.getType().equals(ChannelType.CATEGORY)) {
 			DBFunctions.linkCategory(source.getId(), target.getId());
 			updateLinkedCategories(); 
@@ -456,6 +485,21 @@ public class Hub {
 		linkedCategories = DBFunctions.getLinkedCategories();
 	}
 
+	
+	
+	
+	
+	/**
+	 * Updates sourceGuilds
+	 * <p>
+	 * Updates the cache stored in sourceGuilds to the most recent version from the db
+	 */
+	public static void updateSourceGuilds() {
+		sourceGuilds = DBFunctions.getSourceGuilds();
+	}
+	
+	
+	
 
 	public static boolean isSourceGuild(String id) {
 		if(sourceGuilds.contains(id)) {
