@@ -44,3 +44,4 @@ Currently supported events:
 
 ## Commands
 * !link \[source] \[target] - Links two guilds together
+*
