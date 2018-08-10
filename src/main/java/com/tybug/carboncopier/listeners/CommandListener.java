@@ -1,5 +1,9 @@
 package com.tybug.carboncopier.listeners;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import com.tybug.carboncopier.DBFunctions;
 import com.tybug.carboncopier.Hub;
 
@@ -11,7 +15,9 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 public class CommandListener extends ListenerAdapter {
 
-
+	private static final String SCRIPT_PATH = "./compiler.sh";
+	
+	
 	@Override
 	public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
 		if(!DBFunctions.getAuthorizedUsers().contains(event.getAuthor().getId())) {
@@ -21,7 +27,6 @@ public class CommandListener extends ListenerAdapter {
 
 		String content = event.getMessage().getContentRaw();
 
-
 		if(content.startsWith("!link")) {
 			String[] parts = content.split(" ");
 			if(parts.length != 3) {
@@ -30,6 +35,23 @@ public class CommandListener extends ListenerAdapter {
 			}
 
 			Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2]);
+		}
+		
+		if(content.startsWith("!restart")) {
+			event.getChannel().sendMessage("Restarting...").queue();
+			 try {
+				Process p = Runtime.getRuntime().exec(SCRIPT_PATH);
+				BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
+				String line;
+			    while ((line = stdout.readLine()) != null) {
+			    	event.getChannel().sendMessage(line).queue();
+			    }
+			    stdout.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			 
+			 event.getJDA().shutdown();
 		}
 
 

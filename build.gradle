@@ -33,14 +33,19 @@ dependencies {
     compile "com.github.xerial:sqlite-jdbc:3.23.1"
 }
 
-
-
-defaultTasks 'copyDependencies'
-
 task copyDependencies(type: Copy) {
    from configurations.runtime
    into 'dependencies'
 }
+
+// Modify existing run task to copy all jars
+// I literally just spent an hour yelling at javac only to realize I could have uploaded build/classes instead and ran those. But I'm too fucking deep in already 
+// so might as well use mine
+run{
+	dependsOn copyDependencies
+}
+
+
 
 allprojects {
 		repositories {
