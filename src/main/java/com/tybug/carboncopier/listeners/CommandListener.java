@@ -40,13 +40,7 @@ public class CommandListener extends ListenerAdapter {
 		if(content.startsWith("!restart")) {
 			event.getChannel().sendMessage("Restarting...").queue();
 			 try {
-				Process p = Runtime.getRuntime().exec(SCRIPT_PATH);
-				BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				String line;
-			    while ((line = stdout.readLine()) != null) {
-			    	event.getChannel().sendMessage(line).queue();
-			    }
-			    stdout.close();
+				Runtime.getRuntime().exec(SCRIPT_PATH);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
