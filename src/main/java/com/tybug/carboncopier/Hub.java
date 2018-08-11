@@ -236,7 +236,7 @@ public class Hub {
 		}
 		
 		if(sourceMessage.getReactions().size() != 0) { // if there are any reactions at all
-//			eb.addField("Reactions", sb.toString(,), false);
+			eb.addField("Reactions", sb.toString(), false);
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
 			if(embed.getColor().equals(COLOR_REACT)) {
