@@ -234,7 +234,8 @@ public class Hub {
 			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")));
 			sb.append("\n");
 		}
-
+		
+		System.out.println(sb.toString());
 		if(!sb.toString().equals("")) { //if it equals "", there were no reactions (happens when a reaction is removed)
 			eb.addField("Reactions", sb.toString(), false);
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
