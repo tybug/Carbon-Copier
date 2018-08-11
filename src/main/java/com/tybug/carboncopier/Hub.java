@@ -227,6 +227,7 @@ public class Hub {
 		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
 		eb.setDescription(sourceMessage.getContentRaw());
 		eb.setFooter(embed.getFooter().getText(), embed.getFooter().getIconUrl());
+		eb.setImage(embed.getImage() == null ? null : embed.getImage().getUrl());
 
 		StringBuilder sb = new StringBuilder();
 		for(String reactionCode : emojis.keySet()) {
@@ -234,9 +235,16 @@ public class Hub {
 			sb.append("\n");
 		}
 
-
-		eb.addField("Reactions", sb.toString(), false);
-		eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
+		if(!sb.toString().equals("")) { //if it equals "", there were no reactions (happens when a reaction is removed)
+			eb.addField("Reactions", sb.toString(), false);
+			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
+		} else {
+			if(embed.getColor().equals(COLOR_REACT)) {
+				eb.setColor(COLOR_MESSAGE);
+			} else {
+				 eb.setColor(embed.getColor());
+			}
+		}
 		targetMessage.editMessage(eb.build()).queue();
 	}
 
