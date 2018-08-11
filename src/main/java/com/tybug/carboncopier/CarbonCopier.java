@@ -38,7 +38,6 @@ public class CarbonCopier {
 					.addEventListener(new MessageListener(), new RoleListener(), new ChannelListener(), new CommandListener()) // add all the listeners
 					.setGame(Game.playing("Backing up your server")) //set "Playing..." display message
 					.buildBlocking();  //build the whole thing, blocking guarantees it will be completely loaded vs async which does not
-			
 			Hub.setup();
 		}
 		catch (LoginException | InterruptedException e) {
