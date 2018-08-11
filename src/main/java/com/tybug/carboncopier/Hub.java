@@ -235,8 +235,7 @@ public class Hub {
 			sb.append("\n");
 		}
 		
-		System.out.println(sb.toString());
-		if(!sb.toString().equals("")) { //if it equals "", there were no reactions (happens when a reaction is removed)
+		if(sourceMessage.getReactions().size() != 0) { // if there are any reactions at all
 			eb.addField("Reactions", sb.toString(), false);
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
