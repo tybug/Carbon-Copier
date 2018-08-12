@@ -76,7 +76,7 @@ public class Hub {
 
 	private static final String LOG_CATEGORY_NAME = "ADMIN";
 	private static final String LOG_CHANNEL_NAME = "log";
-
+	
 	
 	public static void setup() {
 		sourceGuilds = DBFunctions.getSourceGuilds();
