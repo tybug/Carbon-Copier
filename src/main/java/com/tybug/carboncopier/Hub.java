@@ -109,44 +109,23 @@ public class Hub {
 	
 	
 	
-	
-	public static void sendMessage(JDA jda, String profileURL, String username, String content, 
-			List<Attachment> attachments, List<MessageEmbed> embeds, OffsetDateTime timestamp, String messageID, String channelID, String guildID) {
+	/**
+	 * Copies a source message to the linked guild and channel. The source message is then linked to the target message in the db.
+	 * <p>
+	 * The color of all copied MessageEmbeds will be overriden in favor of the master color scheme
+	 * <p>
+	 * All references to 'message' in the following documentation refer to the source message, to be copied.
+	 * @param jda The JDA
+	 * @param MessageInfo The meta info contained in the message
+	 */
+	public static void sendMessage(JDA jda, MessageInfo info) {
 
-		Guild guild = jda.getGuildById(guildID);
-		TextChannel channel = jda.getTextChannelById(linkedChannels.get(channelID));
-		boolean hasFile = false;
+		MessageEmbed embed = createMessage(jda, info);
+		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
+		MessageAction action = targetChannel.sendMessage(embed);
 		
-		EmbedBuilder eb = new EmbedBuilder();
-		
-		// Keep these fields in the sent embed
-		eb.setDescription(content);
-
-		if(embeds.size() == 1) {
-			eb = new EmbedBuilder(embeds.get(0));
-		}
-		
-		// Overwrite these fields from the sent embed
-		eb.setAuthor(username, TEMP_URL, profileURL);
-		String time = parseTime(timestamp);
-		eb.setFooter(guild.getName() + " • " + time, guild.getIconUrl());
-		eb.setColor(COLOR_MESSAGE);
-
-
-		if(attachments.size() == 1) {
-			if(attachments.get(0).isImage()) {
-				eb.setImage(attachments.get(0).getUrl());
-			} else {
-				hasFile = true;
-			}
-		} 
-
-		else if(attachments.size() > 1) {
-			eb.addField("Images", attachments.stream().map(a -> a.toString()).collect(Collectors.joining("\n")), false);
-		} 
-
-		MessageAction action = channel.sendMessage(eb.build());
-		if(hasFile) {
+		List<Attachment> attachments = info.getAttachments();
+		if(attachments.size() > 0 && attachments.get(0).isImage() == false) {
 			try {
 				action.addFile(attachments.get(0).getInputStream(), attachments.get(0).getFileName());
 			} catch (IOException e) {
@@ -155,32 +134,19 @@ public class Hub {
 		}
 		
 		
-		DBFunctions.linkMessage(messageID, action.complete().getId());
-		
+		DBFunctions.linkMessage(info.getMessageID(), action.complete().getId());
 		
 	}
 
 
-	public static void editMessage(JDA jda, String messageID, String channelID) {
-		TextChannel sourceChannel = jda.getTextChannelById(channelID);
-		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
-
-		EmbedBuilder eb = new EmbedBuilder();
-		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
-		Message sourceMessage = sourceChannel.getMessageById(messageID).complete();
-
-		MessageEmbed embed = targetMessage.getEmbeds().get(0);
-
-		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
-		eb.setDescription(sourceMessage.getContentRaw());
-		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(sourceMessage.getEditedTime()) + ")", embed.getFooter().getIconUrl());
-
-		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
-
-		List<Field> fields = embed.getFields(); // For reaction/image/edit fields
-		for(Field field : fields) {
-			eb.addField(field);
-		}
+	public static void editMessage(JDA jda, MessageInfo info) {
+		
+		MessageEmbed embed = createMessage(jda, info);
+		EmbedBuilder eb = new EmbedBuilder(embed);
+		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(info.getEditedTime()) + ")", embed.getFooter().getIconUrl());
+		
+		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
+		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
@@ -480,6 +446,47 @@ public class Hub {
 	}
 
 
+	
+	
+	
+	/**
+	 * Creates a MessageEmbed representing the target message, with information copied over from the given MessageInfo
+	 * @param jda The source JDA
+	 * @param info The source MessageInfo
+	 * @return
+	 */
+	private static MessageEmbed createMessage(JDA jda, MessageInfo info) {
+		Guild guild = jda.getGuildById(info.getGuildID());
+		
+		EmbedBuilder eb = new EmbedBuilder();
+		
+		// Keep these fields in the sent embed
+		eb.setDescription(info.getContent());
+
+		if(info.getEmbeds().size() == 1) {
+			eb = new EmbedBuilder(info.getEmbeds().get(0));
+		}
+		
+		// Overwrite these fields from the sent embed
+		eb.setAuthor(info.getUsername(), TEMP_URL, info.getProfileURL());
+		String time = parseTime(info.getTimestamp());
+		eb.setFooter(guild.getName() + " • " + time, guild.getIconUrl());
+		eb.setColor(COLOR_MESSAGE);
+
+		List<Attachment> attachments = info.getAttachments();
+		if(attachments.size() == 1) {
+			if(attachments.get(0).isImage()) {
+				eb.setImage(attachments.get(0).getUrl());
+			}
+		} 
+
+		else if(attachments.size() > 1) {
+			eb.addField("Images", attachments.stream().map(a -> a.toString()).collect(Collectors.joining("\n")), false);
+		} 
+
+		
+		return eb.build();
+	}
 
 
 

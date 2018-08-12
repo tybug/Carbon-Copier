@@ -1,14 +1,11 @@
 package com.tybug.carboncopier.listeners;
 
-import java.time.OffsetDateTime;
-import java.util.List;
 
 import com.tybug.carboncopier.Hub;
+import com.tybug.carboncopier.MessageInfo;
 
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.Message.Attachment;
-import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
@@ -30,22 +27,22 @@ public class MessageListener extends ListenerAdapter {
 		JDA jda = event.getJDA();
 		User author = event.getAuthor();
 		Message message = event.getMessage();
-		
-		String profileURL = author.getEffectiveAvatarUrl();
-		String username = author.getName();
-		String content = message.getContentRaw();
-		List<Attachment> attachments = message.getAttachments();
-		List<MessageEmbed> embeds = message.getEmbeds();
-		OffsetDateTime timestamp = message.getCreationTime();
-		String messageID = message.getId();
-		String channelID = event.getChannel().getId();
-		String guildID = event.getGuild().getId();
+		MessageInfo info = new MessageInfo();
+		info.setProfileURL(author.getEffectiveAvatarUrl());
+		info.setUsername(author.getName());
+		info.setContent(message.getContentRaw());
+		info.setAttachments(message.getAttachments());
+		info.setEmbeds(message.getEmbeds());
+		info.setTimestamp(message.getCreationTime());
+		info.setMessageID(message.getId());
+		info.setChannelID(message.getChannel().getId());
+		info.setGuildID(event.getGuild().getId());
 		
 		if(message.getType().equals(MessageType.GUILD_MEMBER_JOIN)) {
-			content = author.getAsMention() + " joined the guild!";
+			info.setContent(author.getAsMention() + " joined the guild!");
 		}
 		
-        Hub.sendMessage(jda, profileURL, username, content, attachments, embeds, timestamp, messageID, channelID, guildID);
+        Hub.sendMessage(jda, info);
     }
 	
 	
@@ -56,11 +53,21 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		JDA jda = event.getJDA();
-		String messageID = event.getMessage().getId();
-		String channelID = event.getChannel().getId();
+		User author = event.getAuthor();
+		Message message = event.getMessage();
+		MessageInfo info = new MessageInfo();
+		info.setProfileURL(author.getEffectiveAvatarUrl());
+		info.setUsername(author.getName());
+		info.setContent(message.getContentRaw());
+		info.setAttachments(message.getAttachments());
+		info.setEmbeds(message.getEmbeds());
+		info.setTimestamp(message.getCreationTime());
+		info.setMessageID(message.getId());
+		info.setChannelID(message.getChannel().getId());
+		info.setGuildID(event.getGuild().getId());
+		info.setEditedTime(message.getEditedTime());
 		
-		
-        Hub.editMessage(jda, messageID, channelID);
+        Hub.editMessage(jda, info);
 	}
 	
 	
