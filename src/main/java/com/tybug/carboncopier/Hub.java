@@ -217,7 +217,8 @@ public class Hub {
 		}
 		
 		if(sourceMessage.getReactions().size() != 0) { // If there are any reactions
-			reactionField = new Field(FIELD_NAME_REACTION, sb.toString(), false);			
+			reactionField = new Field(FIELD_NAME_REACTION, sb.toString(), false);	
+			eb.addField(reactionField);
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
 			if(embed.getColor().equals(COLOR_REACT)) { // No more reactions? Reset to default color
