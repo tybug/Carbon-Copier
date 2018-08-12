@@ -143,6 +143,7 @@ public class Hub {
 		
 		MessageEmbed embed = createMessage(jda, info);
 		EmbedBuilder eb = new EmbedBuilder(embed);
+		eb.setColor(COLOR_EDIT);
 		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(info.getEditedTime()) + ")", embed.getFooter().getIconUrl());
 		
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
