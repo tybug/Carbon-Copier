@@ -1,6 +1,7 @@
 package com.tybug.carboncopier;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.entities.VoiceChannel;
 import net.dv8tion.jda.core.managers.ChannelManager;
 import net.dv8tion.jda.core.managers.GuildController;
+import net.dv8tion.jda.core.requests.restaction.MessageAction;
 
 
 /**
@@ -109,35 +111,53 @@ public class Hub {
 	
 	
 	public static void sendMessage(JDA jda, String profileURL, String username, String content, 
-			List<Attachment> attachments, OffsetDateTime timestamp, String messageID, String channelID, String guildID) {
+			List<Attachment> attachments, List<MessageEmbed> embeds, OffsetDateTime timestamp, String messageID, String channelID, String guildID) {
 
 		Guild guild = jda.getGuildById(guildID);
 		TextChannel channel = jda.getTextChannelById(linkedChannels.get(channelID));
-
-
+		boolean hasFile = false;
+		
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setAuthor(username, TEMP_URL, profileURL);
+		
+		// Keep these fields in the sent embed
 		eb.setDescription(content);
 
+		if(embeds.size() == 1) {
+			eb = new EmbedBuilder(embeds.get(0));
+		}
+		
+		// Overwrite these fields from the sent embed
+		eb.setAuthor(username, TEMP_URL, profileURL);
 		String time = parseTime(timestamp);
-		eb.setFooter("Blair Discord • " + time, guild.getIconUrl());
+		eb.setFooter(guild.getName() + " • " + time, guild.getIconUrl());
+		eb.setColor(COLOR_MESSAGE);
+
 
 		if(attachments.size() == 1) {
-			eb.setImage(attachments.get(0).getUrl());
+			if(attachments.get(0).isImage()) {
+				eb.setImage(attachments.get(0).getUrl());
+			} else {
+				hasFile = true;
+			}
 		} 
 
 		else if(attachments.size() > 1) {
-			jda.getUserById("216008405758771200").openPrivateChannel().complete()
-			.sendMessage("wtf someone sent more than one attachment in a message fucking fix it pls").queue();
+			eb.addField("Images", attachments.stream().map(a -> a.toString()).collect(Collectors.joining("\n")), false);
 		} 
 
-		eb.setColor(COLOR_MESSAGE);
-
-		String target = channel.sendMessage(eb.build()).complete().getId();
-
-
-		DBFunctions.linkMessage(messageID, target);
-
+		MessageAction action = channel.sendMessage(eb.build());
+		if(hasFile) {
+			try {
+				action.addFile(attachments.get(0).getInputStream(), attachments.get(0).getFileName());
+			} catch (IOException e) {
+				System.err.println("IOException while trying to add the file attachment when creating a linked message!");
+			}
+		}
+		
+		
+		DBFunctions.linkMessage(messageID, action.complete().getId());
+		
+		
 	}
 
 
@@ -157,9 +177,9 @@ public class Hub {
 
 		eb.setColor(compareColors(COLOR_EDIT, embed.getColor()));
 
-		List<Field> fields = embed.getFields(); // For the reaction field, if applicable
-		if(fields.size() > 0) {
-			eb.addField(embed.getFields().get(0));
+		List<Field> fields = embed.getFields(); // For reaction/image/edit fields
+		for(Field field : fields) {
+			eb.addField(field);
 		}
 
 		targetMessage.editMessage(eb.build()).queue();

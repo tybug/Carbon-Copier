@@ -8,6 +8,7 @@ import com.tybug.carboncopier.Hub;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
+import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
@@ -34,6 +35,7 @@ public class MessageListener extends ListenerAdapter {
 		String username = author.getName();
 		String content = message.getContentRaw();
 		List<Attachment> attachments = message.getAttachments();
+		List<MessageEmbed> embeds = message.getEmbeds();
 		OffsetDateTime timestamp = message.getCreationTime();
 		String messageID = message.getId();
 		String channelID = event.getChannel().getId();
@@ -43,7 +45,7 @@ public class MessageListener extends ListenerAdapter {
 			content = author.getAsMention() + " joined the guild!";
 		}
 		
-        Hub.sendMessage(jda, profileURL, username, content, attachments, timestamp, messageID, channelID, guildID);
+        Hub.sendMessage(jda, profileURL, username, content, attachments, embeds, timestamp, messageID, channelID, guildID);
     }
 	
 	
