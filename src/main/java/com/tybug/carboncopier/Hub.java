@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.tybug.carboncopier.listeners.ChannelUpdateAction;
@@ -24,6 +25,7 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.MessageEmbed;
+import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.PermissionOverride;
@@ -65,6 +67,10 @@ public class Hub {
 	private static final Color COLOR_EDIT = Color.decode("#f3f718");
 	private static final Color COLOR_DELETE = Color.decode("#ff2a00");
 
+	private static final String FIELD_NAME_REACTION = "Reactions";
+	private static final String FIELD_NAME_EDIT = "Edited";
+
+	
 	public static void setup() {
 		sourceGuilds = DBFunctions.getSourceGuilds();
 
@@ -143,8 +149,8 @@ public class Hub {
 
 		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
 		eb.setColor(COLOR_EDIT);
-		eb.addField("Edited", info.getContent() + "\n" + parseTime(info.getEditedTime()), false); // Set new content as last field
-		
+		eb.addField(FIELD_NAME_EDIT, info.getContent() + "\n" + parseTime(info.getEditedTime()), false); // Set new content as last field
+		// TODO check if adding the field would put us over the field limit
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
@@ -193,14 +199,8 @@ public class Hub {
 				users.add(u.getAsMention());
 			}
 		}
-
-		EmbedBuilder eb = new EmbedBuilder();
 		MessageEmbed embed = targetMessage.getEmbeds().get(0);
-
-		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
-		eb.setDescription(sourceMessage.getContentRaw());
-		eb.setFooter(embed.getFooter().getText(), embed.getFooter().getIconUrl());
-		eb.setImage(embed.getImage() == null ? null : embed.getImage().getUrl());
+		EmbedBuilder eb = new EmbedBuilder(embed); // Copy the target embed
 
 		StringBuilder sb = new StringBuilder();
 		for(String reactionCode : emojis.keySet()) {
@@ -208,14 +208,26 @@ public class Hub {
 			sb.append("\n");
 		}
 		
-		if(sourceMessage.getReactions().size() != 0) { // if there are any reactions at all
-			eb.addField("Reactions", sb.toString(), false);
+		if(sourceMessage.getReactions().size() != 0) { // If there are any reactions
+			
+			boolean fieldFound = false; // TODO boolean is hella ugly...find a way to do it without
+			for(Field f : eb.getFields()) {
+				if(f.getName().equals(FIELD_NAME_REACTION)) { // Builder already has a reaction field
+					f = new Field(FIELD_NAME_REACTION, sb.toString(), false);
+					fieldFound = true;
+					break; // No need to check the rest, guaranteed to only have one
+				}
+			}
+			
+			if(!fieldFound) {
+				eb.addField("Reactions", sb.toString(), false);
+			}
+			
+			
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
-			if(embed.getColor().equals(COLOR_REACT)) {
+			if(embed.getColor().equals(COLOR_REACT)) { // No more reactions? Reset to default color
 				eb.setColor(COLOR_MESSAGE);
-			} else {
-				 eb.setColor(embed.getColor());
 			}
 		}
 		targetMessage.editMessage(eb.build()).queue();
