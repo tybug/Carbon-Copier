@@ -58,7 +58,7 @@ public class MessageListener extends ListenerAdapter {
 		info.setMessageID(message.getId());
 		info.setChannelID(message.getChannel().getId());
 		info.setEditedTime(message.getEditedTime());
-		
+		info.setContent(message.getContentRaw());
         Hub.editMessage(jda, info);
 	}
 	

@@ -143,7 +143,7 @@ public class Hub {
 
 		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
 		eb.setColor(COLOR_EDIT);
-		eb.addField("Edited", parseTime(info.getEditedTime()), false);
+		eb.addField("Edited", info.getContent() + "\n" + parseTime(info.getEditedTime()), false); // Set new content as last field
 		
 
 		targetMessage.editMessage(eb.build()).queue();
