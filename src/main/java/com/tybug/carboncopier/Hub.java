@@ -210,7 +210,7 @@ public class Hub {
 		
 		for(Field f : eb.getFields()) {
 			if(f.getName().equals(FIELD_NAME_REACTION)) { // Builder already has a reaction field
-				f = null;
+				eb.getFields().remove(f);
 				break; // No need to check the rest, guaranteed to only have one
 			}
 		}
