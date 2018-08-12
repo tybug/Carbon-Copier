@@ -113,10 +113,8 @@ public class Hub {
 	 * Copies a source message to the linked guild and channel. The source message is then linked to the target message in the db.
 	 * <p>
 	 * The color of all copied MessageEmbeds will be overriden in favor of the master color scheme
-	 * <p>
-	 * All references to 'message' in the following documentation refer to the source message, to be copied.
 	 * @param jda The JDA
-	 * @param MessageInfo The meta info contained in the message
+	 * @param MessageInfo The meta info contained in the source message
 	 */
 	public static void sendMessage(JDA jda, MessageInfo info) {
 
@@ -144,7 +142,7 @@ public class Hub {
 		MessageEmbed embed = createMessage(jda, info);
 		EmbedBuilder eb = new EmbedBuilder(embed);
 		eb.setColor(COLOR_EDIT);
-		eb.setFooter(embed.getFooter().getText() + " (Edited " + parseTime(info.getEditedTime()) + ")", embed.getFooter().getIconUrl());
+		eb.addField("Edited", parseTime(info.getEditedTime()), false);
 		
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
@@ -157,21 +155,11 @@ public class Hub {
 
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 
-		EmbedBuilder eb = new EmbedBuilder();
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
 
-		MessageEmbed embed = targetMessage.getEmbeds().get(0);
-
-		eb.setAuthor(embed.getAuthor().getName(), TEMP_URL, embed.getAuthor().getIconUrl());
-		eb.setDescription("~~" + targetMessage.getEmbeds().get(0).getDescription() + "~~");
-		eb.setFooter(embed.getFooter().getText() + " (Deleted ~" + parseTime(OffsetDateTime.now()) + ")", embed.getFooter().getIconUrl());
-
-		eb.setColor(compareColors(COLOR_DELETE, embed.getColor()));
-
-		List<Field> fields = embed.getFields(); // For the reaction field, if applicable
-		if(fields.size() > 0) {
-			eb.addField(embed.getFields().get(0));
-		}
+		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
+		eb.setColor(COLOR_DELETE); // No need to compare, delete always takes precedence
+		eb.addField("Deleted", "~" + parseTime(OffsetDateTime.now()) + ")", false);
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
@@ -472,7 +460,14 @@ public class Hub {
 		eb.setAuthor(info.getUsername(), TEMP_URL, info.getProfileURL());
 		String time = parseTime(info.getTimestamp());
 		eb.setFooter(guild.getName() + " • " + time, guild.getIconUrl());
-		eb.setColor(COLOR_MESSAGE);
+		
+		if(info.getEditedTime() == null) { // If it hasn't been edited
+			eb.setColor(COLOR_MESSAGE);
+		} 
+		
+		else {
+			eb.setColor(COLOR_EDIT);
+		}
 
 		List<Attachment> attachments = info.getAttachments();
 		if(attachments.size() == 1) {
