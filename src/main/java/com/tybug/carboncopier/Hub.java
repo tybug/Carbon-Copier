@@ -223,8 +223,8 @@ public class Hub {
 		} else {
 			if(embed.getColor().equals(COLOR_REACT)) { // No more reactions? Reset to default color
 				eb.setColor(COLOR_MESSAGE);
-//				eb.getFields().remove(reactionField);
-				reactionField = null; // Clear field
+				eb.getFields().remove(reactionField);
+//				reactionField = null; // Clear field
 			}
 		}
 		targetMessage.editMessage(eb.build()).queue();
