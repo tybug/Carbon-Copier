@@ -10,11 +10,14 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.slf4j.LoggerFactory;
 
 import com.tybug.carboncopier.listeners.ChannelUpdateAction;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
@@ -51,7 +54,8 @@ import net.dv8tion.jda.core.requests.restaction.MessageAction;
  */
 public class Hub {
 
-
+	final static Logger LOG = (Logger) LoggerFactory.getLogger(Hub.class);
+	
 	private static List<String> sourceGuilds = null;
 
 	private static HashMap<String, String> linkedGuilds = null;
@@ -70,8 +74,12 @@ public class Hub {
 	private static final String FIELD_NAME_REACTION = "Reactions";
 	private static final String FIELD_NAME_EDIT = "Edited";
 
+	private static final String LOG_CATEGORY_NAME = "ADMIN";
+	private static final String LOG_CHANNEL_NAME = "log";
+
 	
 	public static void setup() {
+		LOG.setLevel(Level.INFO);
 		sourceGuilds = DBFunctions.getSourceGuilds();
 
 		linkedGuilds = DBFunctions.getLinkedGuilds();
@@ -81,7 +89,9 @@ public class Hub {
 
 
 	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID) {
-		DBFunctions.linkGuild(sourceID, targetID);
+		
+		LOG.info("Linking guild {} to {}", sourceID, targetID);
+		
 		Hub.updateLinkedGuilds(); // Update our cache BEFORE we create any channels so the id is there
 		Guild source = jda.getGuildById(sourceID);
 		Guild target = jda.getGuildById(targetID);
@@ -104,8 +114,10 @@ public class Hub {
 			Hub.createChannel(voice);
 		}
 		
-			
-		
+		GuildController gc = target.getController();
+		String logID = gc.createTextChannel(LOG_CHANNEL_NAME).setParent((Category) gc.createCategory(LOG_CATEGORY_NAME).complete()).complete().getId();
+		DBFunctions.linkGuild(sourceID, targetID, logID); // TODO test this when you can push the db without issue
+
 		Hub.updateSourceGuilds();
 		channel.sendMessage("Linked `" + source.getName() +"` to `" + target.getName() + "`").queue();
 		
@@ -122,6 +134,7 @@ public class Hub {
 	 * @param MessageInfo The meta info contained in the source message
 	 */
 	public static void sendMessage(JDA jda, MessageInfo info) {
+		LOG.info("Sending message from guild {} by {}", info.getGuildID(), info.getUsername());
 
 		MessageEmbed embed = createMessage(jda, info);
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
@@ -143,6 +156,7 @@ public class Hub {
 
 
 	public static void editMessage(JDA jda, MessageInfo info) {
+		LOG.info("Editing message {} by {}", info.getMessageID(), info.getUsername());
 		
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
@@ -157,6 +171,7 @@ public class Hub {
 
 
 	public static void deleteMessage(JDA jda, String messageID, String channelID) {
+		LOG.info("Deleting message {} ", messageID);
 
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
@@ -173,7 +188,8 @@ public class Hub {
 
 
 
-	public static void updateReactions(JDA jda, String messageID, String userID, String channelID) {
+	public static void updateReactions(JDA jda, String messageID, String channelID) {
+		LOG.info("Updating reactions on message {} ", messageID);
 
 		TextChannel sourceChannel = jda.getTextChannelById(channelID);
 		Message sourceMessage = sourceChannel.getMessageById(messageID).complete();
@@ -229,6 +245,8 @@ public class Hub {
 
 
 	public static void updateRole(Role source) {
+		LOG.info("Updating role {}", source.getName());
+		
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -246,11 +264,10 @@ public class Hub {
 
 
 	public static void createRole(Role source) {
-
+		LOG.info("Creating copy of role {}", source.getName());
+		
 		int pos = source.getPosition();
-
 		Guild sourceGuild = source.getGuild();
-
 		GuildController targetController = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
 
 		Role target = targetController.createCopyOfRole(source).complete();
@@ -264,6 +281,9 @@ public class Hub {
 
 
 	public static void deleteRole(Role source) {
+		LOG.info("Deleting role {}", source.getName());
+
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 
@@ -277,7 +297,8 @@ public class Hub {
 
 
 	public static void createChannel(Channel source) {
-		
+		LOG.info("Creating copy of channel {}", source.getName());
+
 		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -311,6 +332,9 @@ public class Hub {
 
 
 	public static void deleteChannel(Channel source) {
+		LOG.info("Deleting channel {}", source.getName());
+
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -330,6 +354,9 @@ public class Hub {
 
 
 	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
+		LOG.info("Updating textchannel {} with action {}", source.getName(), action);
+
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
@@ -350,6 +377,8 @@ public class Hub {
 
 
 	public static void updateVoiceChannel(VoiceChannel source, ChannelUpdateAction action) {
+		LOG.info("Updating voicechannel {} with action {}", source.getName(), action);
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		VoiceChannel target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
@@ -370,6 +399,9 @@ public class Hub {
 
 
 	public static void updateChannel(Channel source, ChannelUpdateAction action) {
+		LOG.info("Updating channel {} with action {}", source.getName(), action);
+
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -411,6 +443,9 @@ public class Hub {
 
 
 	public static void updateChannelPerms(Channel source, Collection<Role> sourceRoles) {
+		LOG.info("Updating perms of channel {} for roles {}", source.getName(), sourceRoles.stream().map(r -> r.getName()).collect(Collectors.joining(", ")));
+
+		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -448,6 +483,8 @@ public class Hub {
 	 * @return
 	 */
 	private static MessageEmbed createMessage(JDA jda, MessageInfo info) {
+		LOG.debug("Creating message embed for message {} by ", info.getMessageID(), info.getUsername());
+		
 		Guild guild = jda.getGuildById(info.getGuildID());
 		
 		EmbedBuilder eb = new EmbedBuilder();

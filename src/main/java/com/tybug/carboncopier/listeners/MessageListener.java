@@ -59,6 +59,7 @@ public class MessageListener extends ListenerAdapter {
 		info.setChannelID(message.getChannel().getId());
 		info.setEditedTime(message.getEditedTime());
 		info.setContent(message.getContentRaw());
+		info.setUsername(event.getAuthor().getName()); //for debugging
         Hub.editMessage(jda, info);
 	}
 	
@@ -84,10 +85,9 @@ public class MessageListener extends ListenerAdapter {
 		}
 		JDA jda = event.getJDA();
 		String messageID = event.getMessageId();
-		String userID = event.getUser().getId();
 		String channelID = event.getChannel().getId();
 		
-        Hub.updateReactions(jda, messageID, userID, channelID);
+        Hub.updateReactions(jda, messageID, channelID);
 	}
 	
 	
@@ -99,10 +99,9 @@ public class MessageListener extends ListenerAdapter {
 		}
 		JDA jda = event.getJDA();
 		String messageID = event.getMessageId();
-		String userID = event.getUser().getId();
 		String channelID = event.getChannel().getId();
 		
-        Hub.updateReactions(jda, messageID, userID, channelID);
+        Hub.updateReactions(jda, messageID, channelID);
 	}
 	
 }

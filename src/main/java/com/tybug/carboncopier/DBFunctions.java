@@ -174,9 +174,10 @@ public class DBFunctions {
 	 * Inserts values (source, target) into the GUILDS table in the INFO database
 	 * @param source The source guild id
 	 * @param target The target guild id
+	 * @param log The id of the log channel in the target guild
 	 */
-	public static void linkGuild(String source, String target) {
-		modifyDatabase("info", Arrays.asList(source, target), "INSERT INTO 'GUILDS' ('SOURCE', 'TARGET') VALUES (?, ?)");
+	public static void linkGuild(String source, String target, String log) {
+		modifyDatabase("info", Arrays.asList(source, target, log), "INSERT INTO 'GUILDS' ('SOURCE', 'TARGET', 'LOG') VALUES (?, ?, ?)");
 	}
 	
 	

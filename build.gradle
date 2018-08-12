@@ -11,7 +11,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id 'com.sedmelluq.jdaction' version '1.0.2'
+//    id 'com.sedmelluq.jdaction' version '1.0.2'
 }
 
 mainClassName = 'com.tybug.carboncopier.CarbonCopier'
@@ -31,6 +31,8 @@ dependencies {
 	compile 'com.jagrosh:jda-utilities:2.1'
     compile 'net.dv8tion:JDA:3.7.1_385'
     compile "com.github.xerial:sqlite-jdbc:3.23.1"
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '0.9.26'
+    
 }
 
 task copyDependencies(type: Copy) {
