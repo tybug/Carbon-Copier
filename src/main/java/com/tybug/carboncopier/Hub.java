@@ -12,12 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tybug.carboncopier.listeners.ChannelUpdateAction;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.Permission;
@@ -54,7 +53,8 @@ import net.dv8tion.jda.core.requests.restaction.MessageAction;
  */
 public class Hub {
 
-	final static Logger LOG = (Logger) LoggerFactory.getLogger(Hub.class);
+	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
+	
 	
 	private static List<String> sourceGuilds = null;
 
@@ -79,7 +79,6 @@ public class Hub {
 
 	
 	public static void setup() {
-		LOG.setLevel(Level.INFO);
 		sourceGuilds = DBFunctions.getSourceGuilds();
 
 		linkedGuilds = DBFunctions.getLinkedGuilds();
