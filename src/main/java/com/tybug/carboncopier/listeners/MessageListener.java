@@ -53,19 +53,10 @@ public class MessageListener extends ListenerAdapter {
 		}
 		
 		JDA jda = event.getJDA();
-		User author = event.getAuthor();
 		Message message = event.getMessage();
 		MessageInfo info = new MessageInfo();
-		info.setProfileURL(author.getEffectiveAvatarUrl());
-		info.setUsername(author.getName());
-		info.setContent(message.getContentRaw());
-		info.setAttachments(message.getAttachments());
-		info.setEmbeds(message.getEmbeds());
-		info.setTimestamp(message.getCreationTime());
 		info.setMessageID(message.getId());
 		info.setChannelID(message.getChannel().getId());
-		info.setGuildID(event.getGuild().getId());
-		info.setEditedTime(message.getEditedTime());
 		
         Hub.editMessage(jda, info);
 	}

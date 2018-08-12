@@ -24,7 +24,6 @@ import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.MessageEmbed;
-import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.PermissionOverride;
@@ -139,13 +138,13 @@ public class Hub {
 
 	public static void editMessage(JDA jda, MessageInfo info) {
 		
-		MessageEmbed embed = createMessage(jda, info);
-		EmbedBuilder eb = new EmbedBuilder(embed);
+		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
+		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
+
+		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
 		eb.setColor(COLOR_EDIT);
 		eb.addField("Edited", parseTime(info.getEditedTime()), false);
 		
-		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
-		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
@@ -154,7 +153,6 @@ public class Hub {
 	public static void deleteMessage(JDA jda, String messageID, String channelID) {
 
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
-
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
 
 		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
