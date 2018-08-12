@@ -208,23 +208,19 @@ public class Hub {
 			sb.append("\n");
 		}
 		
-		Field reactionField = null;
 		for(Field f : eb.getFields()) {
 			if(f.getName().equals(FIELD_NAME_REACTION)) { // Builder already has a reaction field
-				reactionField = f;
+				f = null;
 				break; // No need to check the rest, guaranteed to only have one
 			}
 		}
 		
 		if(sourceMessage.getReactions().size() != 0) { // If there are any reactions
-			reactionField = new Field(FIELD_NAME_REACTION, sb.toString(), false);	
-			eb.addField(reactionField);
+			eb.addField(new Field(FIELD_NAME_REACTION, sb.toString(), false));
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
 			if(embed.getColor().equals(COLOR_REACT)) { // No more reactions? Reset to default color
 				eb.setColor(COLOR_MESSAGE);
-				eb.getFields().remove(reactionField);
-//				reactionField = null; // Clear field
 			}
 		}
 		targetMessage.editMessage(eb.build()).queue();
