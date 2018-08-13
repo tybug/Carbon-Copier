@@ -177,7 +177,7 @@ public class Hub {
 
 		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
 		eb.setColor(COLOR_DELETE); // No need to compare, delete always takes precedence
-		eb.addField("Deleted", "~" + parseTime(OffsetDateTime.now()) + ")", false);
+		eb.addField("Deleted", "~" + parseTime(OffsetDateTime.now()), false);
 
 		targetMessage.editMessage(eb.build()).queue();
 	}
