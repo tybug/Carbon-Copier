@@ -6,6 +6,9 @@ import java.io.IOException;
 
 import javax.security.auth.login.LoginException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tybug.carboncopier.listeners.ChannelListener;
 import com.tybug.carboncopier.listeners.CommandListener;
 import com.tybug.carboncopier.listeners.MessageListener;
@@ -17,8 +20,11 @@ import net.dv8tion.jda.core.JDABuilder;
 import net.dv8tion.jda.core.entities.Game;
 
 public class CarbonCopier {
-	public static void main(String[] args) {
+	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
 
+	
+	public static void main(String[] args) {
+		LOG.info("");
 		BufferedReader br;
 		String token = null;
 

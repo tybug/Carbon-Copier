@@ -73,7 +73,9 @@ public class Hub {
 
 	private static final String FIELD_NAME_REACTION = "Reactions";
 	private static final String FIELD_NAME_EDIT = "Edited";
+	private static final String FIELD_NAME_LIMIT = "Last allowed field";
 
+	
 	private static final String LOG_CATEGORY_NAME = "ADMIN";
 	private static final String LOG_CHANNEL_NAME = "log";
 	
@@ -133,7 +135,7 @@ public class Hub {
 	 * @param MessageInfo The meta info contained in the source message
 	 */
 	public static void sendMessage(JDA jda, MessageInfo info) {
-		LOG.info("Sending message from guild {} by {}", info.getGuildID(), info.getUsername());
+		LOG.debug("Copying message from guild {} by {}", jda.getGuildById(info.getGuildID()).getName(), info.getUsername());
 
 		MessageEmbed embed = createMessage(jda, info);
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
@@ -155,7 +157,7 @@ public class Hub {
 
 
 	public static void editMessage(JDA jda, MessageInfo info) {
-		LOG.info("Editing message {} by {}", info.getMessageID(), info.getUsername());
+		LOG.info("Copying message edit of {} by {}", info.getMessageID(), info.getUsername());
 		
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
@@ -163,14 +165,12 @@ public class Hub {
 		EmbedBuilder eb = new EmbedBuilder(targetMessage.getEmbeds().get(0)); // Copy the target embed
 		eb.setColor(COLOR_EDIT);
 		eb.addField(FIELD_NAME_EDIT, info.getContent() + "\n" + parseTime(info.getEditedTime()), false); // Set new content as last field
-		// TODO check if adding the field would put us over the field limit
-
 		targetMessage.editMessage(eb.build()).queue();
 	}
 
 
 	public static void deleteMessage(JDA jda, String messageID, String channelID) {
-		LOG.info("Deleting message {} ", messageID);
+		LOG.info("Copying message delete of {} ", messageID);
 
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(channelID));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(messageID)).complete();
@@ -188,7 +188,7 @@ public class Hub {
 
 
 	public static void updateReactions(JDA jda, String messageID, String channelID) {
-		LOG.info("Updating reactions on message {} ", messageID);
+		LOG.info("Copying reactions on message {}", messageID);
 
 		TextChannel sourceChannel = jda.getTextChannelById(channelID);
 		Message sourceMessage = sourceChannel.getMessageById(messageID).complete();
@@ -244,7 +244,7 @@ public class Hub {
 
 
 	public static void updateRole(Role source) {
-		LOG.info("Updating role {}", source.getName());
+		LOG.info("Updating role {} from {}", source.getName(), source.getGuild().getName());
 		
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
@@ -263,7 +263,7 @@ public class Hub {
 
 
 	public static void createRole(Role source) {
-		LOG.info("Creating copy of role {}", source.getName());
+		LOG.info("Copying role {} from {}", source.getName(), source.getGuild().getName());
 		
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
@@ -280,7 +280,7 @@ public class Hub {
 
 
 	public static void deleteRole(Role source) {
-		LOG.info("Deleting role {}", source.getName());
+		LOG.info("Copying deletion of role {} from {}", source.getName(), source.getGuild().getName());
 
 		
 		Guild sourceGuild = source.getGuild();
@@ -296,7 +296,7 @@ public class Hub {
 
 
 	public static void createChannel(Channel source) {
-		LOG.info("Creating copy of channel {}", source.getName());
+		LOG.info("Copying creation of channel {} from {}", source.getName(), source.getGuild().getName());
 
 		
 		Guild sourceGuild = source.getGuild();
@@ -331,7 +331,7 @@ public class Hub {
 
 
 	public static void deleteChannel(Channel source) {
-		LOG.info("Deleting channel {}", source.getName());
+		LOG.info("Copying deletion of channel {} from {}", source.getName(), source.getGuild().getName());
 
 		
 		Guild sourceGuild = source.getGuild();
@@ -353,8 +353,7 @@ public class Hub {
 
 
 	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
-		LOG.info("Updating textchannel {} with action {}", source.getName(), action);
-
+		LOG.info("Updating textchannel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
 		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -376,7 +375,8 @@ public class Hub {
 
 
 	public static void updateVoiceChannel(VoiceChannel source, ChannelUpdateAction action) {
-		LOG.info("Updating voicechannel {} with action {}", source.getName(), action);
+		
+		LOG.info("Updating voicechannel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
 		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -398,8 +398,7 @@ public class Hub {
 
 
 	public static void updateChannel(Channel source, ChannelUpdateAction action) {
-		LOG.info("Updating channel {} with action {}", source.getName(), action);
-
+		LOG.info("Updating channel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
 		
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -442,7 +441,8 @@ public class Hub {
 
 
 	public static void updateChannelPerms(Channel source, Collection<Role> sourceRoles) {
-		LOG.info("Updating perms of channel {} for roles {}", source.getName(), sourceRoles.stream().map(r -> r.getName()).collect(Collectors.joining(", ")));
+		LOG.info("Updating perms of channel {} from {} for roles {}", source.getName(),
+				source.getGuild().getName(), sourceRoles.stream().map(r -> r.getName()).collect(Collectors.joining(", ")));
 
 		
 		Guild sourceGuild = source.getGuild();
@@ -531,6 +531,7 @@ public class Hub {
 	 * Updates the cache stored in linkedChannels to the most recent version from the db
 	 */
 	private static void updateLinkedChannels() {
+		LOG.debug("Updating linked channels");
 		linkedChannels = DBFunctions.getLinkedChannels();
 	}
 
@@ -542,6 +543,7 @@ public class Hub {
 	 * Updates the cache stored in linkedGuilds to the most recent version from the db
 	 */
 	public static void updateLinkedGuilds() {
+		LOG.debug("Updating linked guilds");
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 	}
 	
@@ -552,6 +554,7 @@ public class Hub {
 	 * Updates the cache stored in linkedCategories to the most recent version from the db
 	 */
 	public static void updateLinkedCategories() {
+		LOG.debug("Updating linked categories");
 		linkedCategories = DBFunctions.getLinkedCategories();
 	}
 
@@ -565,6 +568,7 @@ public class Hub {
 	 * Updates the cache stored in sourceGuilds to the most recent version from the db
 	 */
 	public static void updateSourceGuilds() {
+		LOG.debug("Updating source guilds");
 		sourceGuilds = DBFunctions.getSourceGuilds();
 	}
 	
@@ -572,10 +576,13 @@ public class Hub {
 	
 
 	public static boolean isSourceGuild(String id) {
+		LOG.debug("Checking if {} is a source guild", id);
 		if(sourceGuilds.contains(id)) {
+			LOG.debug("{} is a source guild", id);
 			return true;
 		}
-
+		
+		LOG.debug("{} is not a source guild", id);
 		return false;
 	}
 
@@ -583,10 +590,12 @@ public class Hub {
 
 
 	private static Color compareColors(Color c1, Color c2) {
+		LOG.debug("Comparing colors {} and {} (RGB values)", c1.getRGB(), c2.getRGB());
 		if(getColorPriority(c1) > getColorPriority(c2)) {
+			LOG.debug("Color {} has a higher priority", c1.getRGB());
 			return c1;
 		}
-
+		LOG.debug("Color {} has a higher priority", c2.getRGB());
 		return c2;
 
 	}
@@ -604,13 +613,27 @@ public class Hub {
 	 * @return The priority of this color
 	 */
 	private static int getColorPriority(Color c) {
+		LOG.trace("Finding priority of color {}", c.getRGB());
 		int rgb = c.getRGB();
 
-		if(rgb == COLOR_MESSAGE.getRGB()) return 1;
-		if(rgb == COLOR_REACT.getRGB()) return 2;
-		if(rgb == COLOR_EDIT.getRGB()) return 3;
-		if(rgb == COLOR_DELETE.getRGB()) return 4;
+		if(rgb == COLOR_MESSAGE.getRGB()) {
+			LOG.trace("Priority of color {} is 1", c.getRGB());
+			return 1;
+		}
+		if(rgb == COLOR_REACT.getRGB()) {
+			LOG.trace("Priority of color {} is 2", c.getRGB());
+			return 2;
+		}
+		if(rgb == COLOR_EDIT.getRGB()) {
+			LOG.trace("Priority of color {} is 3", c.getRGB());
+			return 3;
+		}
+		if(rgb == COLOR_DELETE.getRGB()) {
+			LOG.trace("Priority of color {} is 4", c.getRGB());
+			return 4;
+		}
 
+		LOG.trace("Priority of color {} is 0", c.getRGB());
 		return 0;
 
 	}
@@ -628,11 +651,12 @@ public class Hub {
 	 * @return The parsed date
 	 */
 	private static String parseTime(OffsetDateTime timestamp) {
+		LOG.trace("Parsing timestamp {}", timestamp);
 		Date date = Date.from(timestamp.toInstant());
 		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
+		LOG.trace("Parsed {} to {}", timestamp, format.format(date));
 		return format.format(date);
 	}
-
 
 
 }
