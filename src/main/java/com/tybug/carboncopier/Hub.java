@@ -197,20 +197,25 @@ public class Hub {
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(sourceMessage.getId())).complete();
 
 		HashMap<String, List<String>> emojis = new HashMap<String, List<String>>();
-
+		
+		
 		for(MessageReaction mr : sourceMessage.getReactions()) {
-
+			LOG.debug("Copying users on reaction {} ", mr.getReactionEmote().getName());
 			String reactionCode;
 			ReactionEmote reaction = mr.getReactionEmote();
 			if(reaction.isEmote()) {
+				LOG.trace("{} is an emote in guild {}", reaction.getName(), reaction.getEmote().getGuild());
 				reactionCode = reaction.getEmote().getAsMention(); // if it is a guild specific reaction
 			} else {
+				LOG.trace("{} is a default discord reaction", reaction.getName());
 				reactionCode = reaction.getName(); // if it is a default, unicode reaction
 			}
 			emojis.put(reactionCode, new ArrayList<String>());
 
+			LOG.trace("Counting users for reaction {}", reaction.getName());
 			List<String> users = emojis.get(reactionCode);
 			for(User u : mr.getUsers().complete()){
+				LOG.trace("Adding user {} to reaction list for {}", u.getName(), reaction.getName());
 				users.add(u.getAsMention());
 			}
 		}
@@ -219,22 +224,30 @@ public class Hub {
 
 		StringBuilder sb = new StringBuilder();
 		for(String reactionCode : emojis.keySet()) {
+			LOG.trace("Appending reactionCode {} from reaction list to stringBuilder", reactionCode);
 			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")) + "(" + emojis.get(reactionCode).size() + ")");
 			sb.append("\n");
 		}
 		
+		LOG.debug("Checking for reaction field");
 		for(Field f : eb.getFields()) {
+			LOG.trace("Checking field {}", f.getName());
 			if(f.getName().equals(FIELD_NAME_REACTION)) { // Builder already has a reaction field
+				LOG.trace("Found a reaction field; removing from embed"); 
 				eb.getFields().remove(f);
 				break; // No need to check the rest, guaranteed to only have one
 			}
 		}
 		
+		
 		if(sourceMessage.getReactions().size() != 0) { // If there are any reactions
+			LOG.debug("Reactions remain on source message, adding reaction field");
 			eb.addField(new Field(FIELD_NAME_REACTION, sb.toString(), false));
 			eb.setColor(compareColors(COLOR_REACT, embed.getColor()));
 		} else {
+			LOG.debug("No reactions left on source message");
 			if(embed.getColor().equals(COLOR_REACT)) { // No more reactions? Reset to default color
+				LOG.debug("Previously COLOR_REACT, setting to COLOR_MESSAGE");
 				eb.setColor(COLOR_MESSAGE);
 			}
 		}
