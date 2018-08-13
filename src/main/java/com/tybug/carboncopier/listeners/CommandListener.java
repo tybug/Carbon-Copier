@@ -24,7 +24,6 @@ public class CommandListener extends ListenerAdapter {
 
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-		LOG.debug("Guild Message received in {} from {}", event.getGuild().getName(), event.getAuthor().getName());
 		if(event.getChannel().getId().equals(GITHUB_CC)) {
 			LOG.info("Recieved github webhook...restarting");
 			restart(event.getJDA());

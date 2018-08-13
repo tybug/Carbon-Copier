@@ -9,14 +9,11 @@ import javax.security.auth.login.LoginException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.napstr.logback.DiscordAppender;
 import com.tybug.carboncopier.listeners.ChannelListener;
 import com.tybug.carboncopier.listeners.CommandListener;
 import com.tybug.carboncopier.listeners.MessageListener;
 import com.tybug.carboncopier.listeners.RoleListener;
 
-import ch.qos.logback.classic.AsyncAppender;
-import ch.qos.logback.classic.LoggerContext;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -27,7 +24,6 @@ public class CarbonCopier {
 
 
 	public static void main(String[] args) {
-		LOG.info("");
 		BufferedReader br;
 		String token = null;
 		try {

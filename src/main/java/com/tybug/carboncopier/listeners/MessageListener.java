@@ -1,6 +1,9 @@
 package com.tybug.carboncopier.listeners;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tybug.carboncopier.Hub;
 import com.tybug.carboncopier.MessageInfo;
 
@@ -15,11 +18,19 @@ import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEv
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionRemoveEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
+/**
+ * Listens for events related to Messages
+ * <p>
+ * This includes MessageReceived events and Reaction events
+ * @author Liam DeVoe
+ *
+ */
 public class MessageListener extends ListenerAdapter {
+	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
 
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-		
+		LOG.debug("Guild message received in {} from {}", event.getGuild().getName(), event.getAuthor().getName());
 		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}

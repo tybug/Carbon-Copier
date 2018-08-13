@@ -81,8 +81,9 @@ public class Hub {
 	
 	
 	public static void setup() {
+		LOG.info("Setting up Hub lists/maps");
+		
 		sourceGuilds = DBFunctions.getSourceGuilds();
-
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 		linkedCategories = DBFunctions.getLinkedCategories();
 		linkedChannels = DBFunctions.getLinkedChannels();
@@ -589,7 +590,7 @@ public class Hub {
 	
 
 	public static boolean isSourceGuild(String id) {
-		LOG.debug("Checking if {} is a source guild", id);
+		LOG.trace("Checking if {} is a source guild", id);
 		if(sourceGuilds.contains(id)) {
 			LOG.debug("{} is a source guild", id);
 			return true;
