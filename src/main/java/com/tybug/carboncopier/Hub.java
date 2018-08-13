@@ -28,6 +28,7 @@ import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Message.Attachment;
 import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageEmbed.Field;
+import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.MessageReaction;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.PermissionOverride;
@@ -54,8 +55,8 @@ import net.dv8tion.jda.core.requests.restaction.MessageAction;
 public class Hub {
 
 	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
-	
-	
+
+
 	private static List<String> sourceGuilds = null;
 
 	private static HashMap<String, String> linkedGuilds = null;
@@ -64,7 +65,7 @@ public class Hub {
 
 
 	private static final int ROLE_OFFSET = 1; //how many roles are above the carbon copied roles
-	
+
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
 	private static final Color COLOR_REACT = Color.decode("#f9c131");
@@ -75,14 +76,14 @@ public class Hub {
 	private static final String FIELD_NAME_EDIT = "Edited";
 	private static final String FIELD_NAME_LIMIT = "Last allowed field";
 
-	
+
 	private static final String LOG_CATEGORY_NAME = "ADMIN";
 	private static final String LOG_CHANNEL_NAME = "log";
-	
-	
+
+
 	public static void setup() {
 		LOG.info("Setting up Hub lists/maps");
-		
+
 		sourceGuilds = DBFunctions.getSourceGuilds();
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 		linkedCategories = DBFunctions.getLinkedCategories();
@@ -90,44 +91,71 @@ public class Hub {
 	}
 
 
-	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID) {
+	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID, boolean copyHistory) {
+		LOG.info("Linking guild {} to {}. Copying history? {}", sourceID, targetID, copyHistory);
 		
-		LOG.info("Linking guild {} to {}", sourceID, targetID);
+
 		
-		Hub.updateLinkedGuilds(); // Update our cache BEFORE we create any channels so the id is there
 		Guild source = jda.getGuildById(sourceID);
 		Guild target = jda.getGuildById(targetID);
-		
-		
+
+
+		GuildController gc = target.getController();
+		String logID = gc.createTextChannel(LOG_CHANNEL_NAME).setParent((Category) gc.createCategory(LOG_CATEGORY_NAME).complete()).complete().getId();
+		DBFunctions.linkGuild(sourceID, targetID, logID);
+		Hub.updateLinkedGuilds(); // Update our cache BEFORE we create any channels so the id is there
+		Hub.updateSourceGuilds();
+
 		List<Role> roles = new ArrayList<Role>(source.getRoles()); // Make the list mutable so we can reverse it
 		// Reverse so when we create roles we create ones with lower position first and don't get "provided position is out of bounds"
 		Collections.reverse(roles);
+
+		LOG.debug("Copying roles");
 		for(Role r : roles) {
 			Hub.createRole(r);
 		}	
-		
+		LOG.debug("Copying categories");
 		for(Category category : source.getCategories()) {
+			LOG.trace("Copying category {}", category.getName());
 			Hub.createChannel(category);
 		}
+		LOG.debug("Copying textchannels");
 		for(TextChannel text : source.getTextChannels()) {
+			LOG.trace("Copying textchannel {}", text.getName());
 			Hub.createChannel(text);
 		}
+		LOG.debug("Copying voicechannels");
 		for(VoiceChannel voice : source.getVoiceChannels()) {
+			LOG.trace("Copying voicechannel {}", voice.getName());
 			Hub.createChannel(voice);
 		}
 		
-		GuildController gc = target.getController();
-		String logID = gc.createTextChannel(LOG_CHANNEL_NAME).setParent((Category) gc.createCategory(LOG_CATEGORY_NAME).complete()).complete().getId();
-		DBFunctions.linkGuild(sourceID, targetID, logID); // TODO test this when you can push the db without issue
+		if(!copyHistory) {
+			channel.sendMessage("Finished linking `" + source.getName() +"` to `" + target.getName() + "`").queue();
+			return;
+		}
+		
+		
+		for(TextChannel text : source.getTextChannels()) {
+			List<Message> messages = Hub.loadChannelHistory(text);
+			Collections.reverse(messages); // TODO check how expensive this is... O(1) but can we get better overall by changing the type of messages to a stack?
+			for(Message m : messages) {
+				MessageInfo info = Utils.createMessageInfo(m);
+				Hub.sendMessage(jda, info);
+				if(m.getReactions().size() > 0) { 
+					// Inefficient to do both send and update, but the best we can do without rewriting how messages and reactions are handled
+					Hub.updateReactions(jda, info.getMessageID(), info.getChannelID());
+				}
+			}
+		}
 
-		Hub.updateSourceGuilds();
-		channel.sendMessage("Linked `" + source.getName() +"` to `" + target.getName() + "`").queue();
+		channel.sendMessage("Finished linking `" + source.getName() +"` to `" + target.getName() + "`").queue();
 		
 	}
-	
-	
-	
-	
+
+
+
+
 	/**
 	 * Copies a source message to the linked guild and channel. The source message is then linked to the target message in the db.
 	 * <p>
@@ -141,7 +169,7 @@ public class Hub {
 		MessageEmbed embed = createMessage(jda, info);
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
 		MessageAction action = targetChannel.sendMessage(embed);
-		
+
 		List<Attachment> attachments = info.getAttachments();
 		if(attachments.size() > 0 && attachments.get(0).isImage() == false) {
 			try {
@@ -150,16 +178,16 @@ public class Hub {
 				System.err.println("IOException while trying to add the file attachment when creating a linked message!");
 			}
 		}
-		
-		
+
+
 		DBFunctions.linkMessage(info.getMessageID(), action.complete().getId());
-		
+
 	}
 
 
 	public static void editMessage(JDA jda, MessageInfo info) {
 		LOG.info("Copying message edit of {} by {}", info.getMessageID(), info.getUsername());
-		
+
 		TextChannel targetChannel = jda.getTextChannelById(linkedChannels.get(info.getChannelID()));
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(info.getMessageID())).complete();
 
@@ -198,8 +226,8 @@ public class Hub {
 		Message targetMessage = targetChannel.getMessageById(DBFunctions.getLinkedMessage(sourceMessage.getId())).complete();
 
 		HashMap<String, List<String>> emojis = new HashMap<String, List<String>>();
-		
-		
+
+
 		for(MessageReaction mr : sourceMessage.getReactions()) {
 			LOG.debug("Copying users on reaction {} ", mr.getReactionEmote().getName());
 			String reactionCode;
@@ -229,7 +257,7 @@ public class Hub {
 			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")) + "(" + emojis.get(reactionCode).size() + ")");
 			sb.append("\n");
 		}
-		
+
 		LOG.debug("Checking for reaction field");
 		for(Field f : eb.getFields()) {
 			LOG.trace("Checking field {}", f.getName());
@@ -239,8 +267,8 @@ public class Hub {
 				break; // No need to check the rest, guaranteed to only have one
 			}
 		}
-		
-		
+
+
 		if(sourceMessage.getReactions().size() != 0) { // If there are any reactions
 			LOG.debug("Reactions remain on source message, adding reaction field");
 			eb.addField(new Field(FIELD_NAME_REACTION, sb.toString(), false));
@@ -259,7 +287,7 @@ public class Hub {
 
 	public static void updateRole(Role source) {
 		LOG.info("Updating role {} from {}", source.getName(), source.getGuild().getName());
-		
+
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
@@ -278,14 +306,14 @@ public class Hub {
 
 	public static void createRole(Role source) {
 		LOG.info("Copying role {} from {}", source.getName(), source.getGuild().getName());
-		
+
 		int pos = source.getPosition();
 		Guild sourceGuild = source.getGuild();
 		GuildController targetController = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
 
 		Role target = targetController.createCopyOfRole(source).complete();
 		target.getManager().setColor(source.getColorRaw()); // Not sure if #getColorRaw vs #getColor does anything, but I'm not taking chances
-		
+
 		targetController.modifyRolePositions().selectPosition(target).moveTo(pos + ROLE_OFFSET).queue();
 
 		DBFunctions.linkRole(source.getId(), target.getId());
@@ -296,7 +324,7 @@ public class Hub {
 	public static void deleteRole(Role source) {
 		LOG.info("Copying deletion of role {} from {}", source.getName(), source.getGuild().getName());
 
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 
@@ -312,28 +340,28 @@ public class Hub {
 	public static void createChannel(Channel source) {
 		LOG.info("Copying creation of channel {} from {}", source.getName(), source.getGuild().getName());
 
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = targetGuild.getController().createCopyOfChannel(source).complete();
-		
+
 		for(PermissionOverride override : source.getRolePermissionOverrides()) {
 			Role targetRole = targetGuild.getRoleById(DBFunctions.getLinkedRole(override.getRole().getId()));
 			target.getManager().putPermissionOverride(targetRole, override.getAllowed(), override.getDenied()).queue();
 		}
-		
+
 		// Public role (@everyone) not included in Channel#getRolePermissionOverrides, so we add it manually
 		PermissionOverride publicOverride = source.getPermissionOverride(sourceGuild.getPublicRole());
 		if(publicOverride != null) { // Null if no overrides on @everyone
 			target.getManager().putPermissionOverride(targetGuild.getPublicRole(), publicOverride.getAllowed(), publicOverride.getDenied()).queue();
 		}
-		
-		
+
+
 		if(source.getParent() != null) {
-			 // I never want to write something so disgusting in my life again
+			// I never want to write something so disgusting in my life again
 			target.getManager().setParent(targetGuild.getCategoryById(linkedCategories.get(source.getParent().getId()))).queue();
 		}
-		
+
 		if(source.getType().equals(ChannelType.CATEGORY)) {
 			DBFunctions.linkCategory(source.getId(), target.getId());
 			updateLinkedCategories(); 
@@ -347,7 +375,7 @@ public class Hub {
 	public static void deleteChannel(Channel source) {
 		LOG.info("Copying deletion of channel {} from {}", source.getName(), source.getGuild().getName());
 
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -368,7 +396,7 @@ public class Hub {
 
 	public static void updateTextChannel(TextChannel source, ChannelUpdateAction action) {
 		LOG.info("Updating textchannel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		TextChannel target = targetGuild.getTextChannelById(linkedChannels.get(source.getId()));
@@ -389,9 +417,9 @@ public class Hub {
 
 
 	public static void updateVoiceChannel(VoiceChannel source, ChannelUpdateAction action) {
-		
+
 		LOG.info("Updating voicechannel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		VoiceChannel target = targetGuild.getVoiceChannelById(linkedChannels.get(source.getId()));
@@ -413,7 +441,7 @@ public class Hub {
 
 	public static void updateChannel(Channel source, ChannelUpdateAction action) {
 		LOG.info("Updating channel {} from {} with action {}", source.getName(), source.getGuild().getName(), action);
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -458,7 +486,7 @@ public class Hub {
 		LOG.info("Updating perms of channel {} from {} for roles {}", source.getName(),
 				source.getGuild().getName(), sourceRoles.stream().map(r -> r.getName()).collect(Collectors.joining(", ")));
 
-		
+
 		Guild sourceGuild = source.getGuild();
 		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
 		Channel target = null;
@@ -486,9 +514,9 @@ public class Hub {
 	}
 
 
-	
-	
-	
+
+
+
 	/**
 	 * Creates a MessageEmbed representing the target message, with information copied over from the given MessageInfo
 	 * @param jda The source JDA
@@ -497,27 +525,27 @@ public class Hub {
 	 */
 	private static MessageEmbed createMessage(JDA jda, MessageInfo info) {
 		LOG.debug("Creating message embed for message {} by ", info.getMessageID(), info.getUsername());
-		
+
 		Guild guild = jda.getGuildById(info.getGuildID());
-		
+
 		EmbedBuilder eb = new EmbedBuilder();
-		
+
 		// Keep these fields in the sent embed
 		eb.setDescription(info.getContent());
 
 		if(info.getEmbeds().size() == 1) {
 			eb = new EmbedBuilder(info.getEmbeds().get(0));
 		}
-		
+
 		// Overwrite these fields from the sent embed
 		eb.setAuthor(info.getUsername(), TEMP_URL, info.getProfileURL());
 		String time = parseTime(info.getTimestamp());
 		eb.setFooter(guild.getName() + " • " + time, guild.getIconUrl());
-		
+
 		if(info.getEditedTime() == null) { // If it hasn't been edited
 			eb.setColor(COLOR_MESSAGE);
 		} 
-		
+
 		else {
 			eb.setColor(COLOR_EDIT);
 		}
@@ -533,10 +561,16 @@ public class Hub {
 			eb.addField("Images", attachments.stream().map(a -> a.toString()).collect(Collectors.joining("\n")), false);
 		} 
 
-		
+
 		return eb.build();
 	}
 
+	
+	
+	public static List<Message> loadChannelHistory(TextChannel channel) {
+		List<Message> history = MessageHistory.getHistoryAfter(channel, channel.getId()).complete().getRetrievedHistory();
+		return history;
+	}
 
 
 	/**
@@ -549,8 +583,8 @@ public class Hub {
 		linkedChannels = DBFunctions.getLinkedChannels();
 	}
 
-	
-	
+
+
 	/**
 	 * Updates linkedGuilds
 	 * <p>
@@ -560,8 +594,8 @@ public class Hub {
 		LOG.debug("Updating linked guilds");
 		linkedGuilds = DBFunctions.getLinkedGuilds();
 	}
-	
-	
+
+
 	/**
 	 * Updates linkedCategories
 	 * <p>
@@ -572,10 +606,10 @@ public class Hub {
 		linkedCategories = DBFunctions.getLinkedCategories();
 	}
 
-	
-	
-	
-	
+
+
+
+
 	/**
 	 * Updates sourceGuilds
 	 * <p>
@@ -585,9 +619,9 @@ public class Hub {
 		LOG.debug("Updating source guilds");
 		sourceGuilds = DBFunctions.getSourceGuilds();
 	}
-	
-	
-	
+
+
+
 
 	public static boolean isSourceGuild(String id) {
 		LOG.trace("Checking if {} is a source guild", id);
@@ -595,7 +629,7 @@ public class Hub {
 			LOG.debug("{} is a source guild", id);
 			return true;
 		}
-		
+
 		LOG.debug("{} is not a source guild", id);
 		return false;
 	}

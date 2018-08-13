@@ -1,26 +1,38 @@
 package com.tybug.carboncopier.listeners;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tybug.carboncopier.DBFunctions;
 import com.tybug.carboncopier.Hub;
+import com.tybug.carboncopier.Utils;
 
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.priv.PrivateMessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.core.exceptions.HierarchyException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
+/**
+ * Listens for events (Currently only MessageReceived events), but not to copy them - to enact commands.
+ * @author Liam DeVoe
+ *
+ */
 public class CommandListener extends ListenerAdapter {
 	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
 
 	private static final String SCRIPT_RESTART = "./compiler.sh"; 
 	private static final String GITHUB_CC = "477476287540232202"; // Channel the github webhook is linked to for the Carbon Copier repo
+
+	private static final String EMOJI_ACCEPT = "\u2705";
+	private static final String EMOJI_DENY = "\u274C";
 
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
@@ -43,6 +55,14 @@ public class CommandListener extends ListenerAdapter {
 
 		String content = event.getMessage().getContentRaw();
 
+		
+		if(content.startsWith("!test")) {
+			for(Message m : Hub.loadChannelHistory(event.getJDA().getTextChannelById("475149673816915981"))){
+				event.getJDA().getTextChannelById("477263076706484230").sendMessage("```\n" + m.getContentRaw() + "\n```").queue();
+			}
+		}
+		
+		
 		if(content.startsWith("!link")) {
 			LOG.info("Link command executed by {}", event.getAuthor().getName());
 			String[] parts = content.split(" ");
@@ -52,8 +72,27 @@ public class CommandListener extends ListenerAdapter {
 				return;
 			}
 
-			LOG.debug("Linking guild {} to {}", parts[1], parts[2]);
-			Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2]);
+			Message m = event.getChannel().sendMessage("Would you like to copy previous message history from the guild?").complete();
+			m.addReaction(EMOJI_ACCEPT).queue();
+			m.addReaction(EMOJI_DENY).queue();
+			String messageID = m.getId();
+
+			Utils.waiter.waitForEvent(MessageReactionAddEvent.class, 
+					e -> e.getMessageId().equals(messageID) && // Only trigger if it's the accept or deny reactions
+						 e.getReaction().getReactionEmote().getName().equals(EMOJI_ACCEPT) || e.getReaction().getReactionEmote().getName().equals(EMOJI_DENY), 
+					e -> {
+						if(e.getReaction().getReactionEmote().getName().equals(EMOJI_ACCEPT)) { 
+							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], true);
+							event.getChannel().sendMessage("Linking guilds and copying history").queue();
+						} else if(e.getReaction().getReactionEmote().getName().equals(EMOJI_DENY)) {
+							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], false);
+							event.getChannel().sendMessage("Linking guilds without copying history").queue();
+						}
+					},
+					1, TimeUnit.MINUTES, () -> {
+						event.getChannel().sendMessage("You didn't react in a minute; defaulting to no history copy.").queue();
+						Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], false);
+					});
 		}
 
 
@@ -85,7 +124,7 @@ public class CommandListener extends ListenerAdapter {
 	}
 
 
-	
+
 
 	private static void restart(JDA jda){
 		try {

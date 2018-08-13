@@ -6,14 +6,15 @@ import org.slf4j.LoggerFactory;
 
 import com.tybug.carboncopier.Hub;
 import com.tybug.carboncopier.MessageInfo;
+import com.tybug.carboncopier.Utils;
 
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.User;
-import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
-import net.dv8tion.jda.core.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.core.events.message.guild.GuildMessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent;
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent;
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionRemoveEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -38,16 +39,7 @@ public class MessageListener extends ListenerAdapter {
 		JDA jda = event.getJDA();
 		User author = event.getAuthor();
 		Message message = event.getMessage();
-		MessageInfo info = new MessageInfo();
-		info.setProfileURL(author.getEffectiveAvatarUrl());
-		info.setUsername(author.getName());
-		info.setContent(message.getContentRaw());
-		info.setAttachments(message.getAttachments());
-		info.setEmbeds(message.getEmbeds());
-		info.setTimestamp(message.getCreationTime());
-		info.setMessageID(message.getId());
-		info.setChannelID(message.getChannel().getId());
-		info.setGuildID(event.getGuild().getId());
+		MessageInfo info = Utils.createMessageInfo(message);
 		
 		if(message.getType().equals(MessageType.GUILD_MEMBER_JOIN)) {
 			info.setContent(author.getAsMention() + " joined the guild!");
@@ -58,25 +50,20 @@ public class MessageListener extends ListenerAdapter {
 	
 	
 	@Override
-	public void onMessageUpdate(MessageUpdateEvent event) {
+	public void onGuildMessageUpdate(GuildMessageUpdateEvent event) {
 		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
 		
 		JDA jda = event.getJDA();
 		Message message = event.getMessage();
-		MessageInfo info = new MessageInfo();
-		info.setMessageID(message.getId());
-		info.setChannelID(message.getChannel().getId());
-		info.setEditedTime(message.getEditedTime());
-		info.setContent(message.getContentRaw());
-		info.setUsername(event.getAuthor().getName()); //for debugging
+		MessageInfo info = Utils.createMessageInfo(message);
         Hub.editMessage(jda, info);
 	}
 	
 	
 	@Override
-	public void onMessageDelete(MessageDeleteEvent event) {
+	public void onGuildMessageDelete(GuildMessageDeleteEvent event) {
 		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
@@ -88,6 +75,7 @@ public class MessageListener extends ListenerAdapter {
 		Hub.deleteMessage(jda, messageID, channelID);
 	}
 	
+
 	
 	@Override 
     public void onGuildMessageReactionAdd(GuildMessageReactionAddEvent event) {
