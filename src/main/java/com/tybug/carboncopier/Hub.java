@@ -219,7 +219,7 @@ public class Hub {
 
 		StringBuilder sb = new StringBuilder();
 		for(String reactionCode : emojis.keySet()) {
-			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")));
+			sb.append(reactionCode + ": " + emojis.get(reactionCode).stream().collect(Collectors.joining(", ")) + "(" + emojis.get(reactionCode).size() + ")");
 			sb.append("\n");
 		}
 		
