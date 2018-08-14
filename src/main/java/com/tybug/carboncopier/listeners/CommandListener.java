@@ -29,13 +29,16 @@ public class CommandListener extends ListenerAdapter {
 
 	private static final String SCRIPT_RESTART = "./compiler.sh"; 
 	private static final String GITHUB_CC = "477476287540232202"; // Channel the github webhook is linked to for the Carbon Copier repo
-
+	private static final boolean RESTART_ON_PUSH = true;
 	private static final String EMOJI_ACCEPT = "\u2705";
 	private static final String EMOJI_DENY = "\u274C";
 
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 		if(event.getChannel().getId().equals(GITHUB_CC)) {
+			if(!RESTART_ON_PUSH) {
+				return;
+			}
 			LOG.info("Recieved github webhook...restarting");
 			restart(event.getJDA());
 		}
