@@ -759,8 +759,8 @@ public class Hub {
 		
 		Calendar cal = Calendar.getInstance(); // creates calendar
 	    cal.setTime(date); // sets calendar time/date
-	    cal.add(Calendar.HOUR_OF_DAY, -4); // adds one hour
-	    date = cal.getTime(); // returns new date object, one hour in the future
+	    cal.add(Calendar.HOUR_OF_DAY, -4); // add time
+	    date = cal.getTime(); // returns new date object in the future
 	    
 	    
 		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
