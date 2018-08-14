@@ -762,7 +762,6 @@ public class Hub {
 	    cal.add(Calendar.HOUR_OF_DAY, -4); // subtract time
 	    date = cal.getTime(); // returns new date object in the past
 	    
-	    
 		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
 		LOG.trace("Parsed {} to {}", timestamp, format.format(date));
 		return format.format(date);

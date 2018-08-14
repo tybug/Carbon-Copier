@@ -56,7 +56,8 @@ public class CommandListener extends ListenerAdapter {
 
 
 		if(content.startsWith("!test")) {
-
+			
+			
 		}
 
 
