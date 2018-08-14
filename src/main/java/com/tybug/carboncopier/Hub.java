@@ -30,6 +30,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.MessageReaction;
+import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
 import net.dv8tion.jda.core.entities.PermissionOverride;
 import net.dv8tion.jda.core.entities.PrivateChannel;
@@ -55,7 +56,7 @@ import net.dv8tion.jda.core.requests.restaction.MessageAction;
 public class Hub {
 
 	final static Logger LOG = LoggerFactory.getLogger(Hub.class);
-
+	
 
 	private static List<String> sourceGuilds = null;
 
@@ -64,7 +65,7 @@ public class Hub {
 	private static HashMap<String, String> linkedChannels = null;
 
 
-	private static final int ROLE_OFFSET = 1; //how many roles are above the carbon copied roles
+	private static final int ROLE_OFFSET = 0; //how many roles are above the carbon copied roles, minus one because..reasons
 
 	private static final String TEMP_URL = "https://gmail.com";
 	private static final Color COLOR_MESSAGE = Color.decode("#42f450");
@@ -82,7 +83,7 @@ public class Hub {
 
 
 	public static void setup() {
-		LOG.info("Setting up Hub lists/maps");
+		LOG.debug("Setting up Hub lists/maps");
 
 		sourceGuilds = DBFunctions.getSourceGuilds();
 		linkedGuilds = DBFunctions.getLinkedGuilds();
@@ -93,9 +94,9 @@ public class Hub {
 
 	public static void linkGuilds(JDA jda, PrivateChannel channel, String sourceID, String targetID, boolean copyHistory) {
 		LOG.info("Linking guild {} to {}. Copying history? {}", sourceID, targetID, copyHistory);
-		
 
-		
+
+
 		Guild source = jda.getGuildById(sourceID);
 		Guild target = jda.getGuildById(targetID);
 
@@ -109,8 +110,9 @@ public class Hub {
 		List<Role> roles = new ArrayList<Role>(source.getRoles()); // Make the list mutable so we can reverse it
 		// Reverse so when we create roles we create ones with lower position first and don't get "provided position is out of bounds"
 		Collections.reverse(roles);
-
+		roles.remove(source.getPublicRole()); // Don't copy the public role or we'll make a new one..have to do it specially
 		LOG.debug("Copying roles");
+		Hub.copyPublicRole(source.getPublicRole());
 		for(Role r : roles) {
 			Hub.createRole(r);
 		}	
@@ -129,28 +131,40 @@ public class Hub {
 			LOG.trace("Copying voicechannel {}", voice.getName());
 			Hub.createChannel(voice);
 		}
-		
+
 		if(!copyHistory) {
 			channel.sendMessage("Finished linking `" + source.getName() +"` to `" + target.getName() + "`").queue();
 			return;
 		}
-		
-		
+
+
 		for(TextChannel text : source.getTextChannels()) {
-			List<Message> messages = Hub.loadChannelHistory(text);
-			Collections.reverse(messages); // TODO check how expensive this is... O(1) but can we get better overall by changing the type of messages to a stack?
-			for(Message m : messages) {
-				MessageInfo info = Utils.createMessageInfo(m);
-				Hub.sendMessage(jda, info);
-				if(m.getReactions().size() > 0) { 
-					// Inefficient to do both send and update, but the best we can do without rewriting how messages and reactions are handled
-					Hub.updateReactions(jda, info.getMessageID(), info.getChannelID());
-				}
+			LOG.debug("Loading message history of {}", text.getName());
+			// Use a dev approved hack by passing the channel id to guarantee we load the first message
+			
+			if(!source.getMember(jda.getSelfUser()).hasPermission(text, Permission.MESSAGE_READ)) { // If we can't read from the channel, don't load it
+				channel.sendMessage("I can't read messages in " + text.getAsMention() + ", so I didn't copy the history.");
+				LOG.debug("Missing MESSAGE_READ in {}", text.getName());
+				continue;
+			}
+			MessageHistory history = MessageHistory.getHistoryAround(text, text.getId()).limit(3).complete();	
+			
+			List<Message> messages = history.getRetrievedHistory();
+			if(messages.size() == 0) {
+				LOG.debug("No messages found in channel {}", text.getName());
+				continue;
+			}
+			Message m = messages.get(0); 
+			reproduce(jda, m);
+			
+			// We're loading them only one at a time in case we encounter a channel with millions of messages. Storing them all would result in a stack overflow.
+			while((m = getNextMessage(text, m)) != null) {
+				reproduce(jda, m);
 			}
 		}
 
 		channel.sendMessage("Finished linking `" + source.getName() +"` to `" + target.getName() + "`").queue();
-		
+
 	}
 
 
@@ -312,8 +326,10 @@ public class Hub {
 		GuildController targetController = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId())).getController();
 
 		Role target = targetController.createCopyOfRole(source).complete();
+		LOG.debug("Setting color of role {}", source.getName());
 		target.getManager().setColor(source.getColorRaw()); // Not sure if #getColorRaw vs #getColor does anything, but I'm not taking chances
 
+		LOG.debug("Moving role {} to position {}", source.getName(), pos + ROLE_OFFSET);
 		targetController.modifyRolePositions().selectPosition(target).moveTo(pos + ROLE_OFFSET).queue();
 
 		DBFunctions.linkRole(source.getId(), target.getId());
@@ -333,6 +349,17 @@ public class Hub {
 
 	}
 
+	
+	
+	public static void copyPublicRole(Role source) {
+		LOG.info("Copying permissions of public role {} from guild {}", source.getName(), source.getGuild());
+		
+		Guild sourceGuild = source.getGuild();
+		Guild targetGuild = sourceGuild.getJDA().getGuildById(linkedGuilds.get(sourceGuild.getId()));
+		targetGuild.getPublicRole().getManager().setPermissions(source.getPermissions()).queue();
+		DBFunctions.linkRole(source.getId(), targetGuild.getPublicRole().getId());
+		
+	}
 
 
 
@@ -524,7 +551,7 @@ public class Hub {
 	 * @return
 	 */
 	private static MessageEmbed createMessage(JDA jda, MessageInfo info) {
-		LOG.debug("Creating message embed for message {} by ", info.getMessageID(), info.getUsername());
+		LOG.debug("Creating message embed for message {} by {}", info.getMessageID(), info.getUsername());
 
 		Guild guild = jda.getGuildById(info.getGuildID());
 
@@ -564,13 +591,39 @@ public class Hub {
 
 		return eb.build();
 	}
-
 	
 	
-	public static List<Message> loadChannelHistory(TextChannel channel) {
-		List<Message> history = MessageHistory.getHistoryAfter(channel, channel.getId()).complete().getRetrievedHistory();
-		return history;
+	public static Message getNextMessage(TextChannel channel, Message marker) {
+		List<Message> messages = channel.getHistoryAfter(marker, 1).complete().getRetrievedHistory();
+		if(messages.size() == 0) {
+			return null;
+		}
+		return messages.get(0);
 	}
+	
+	// TODO terrible naming..can't call it send or anything because we use that for real time copying.
+	// need something that reflects copying it from a past message, and copying both the message and reactions
+	// Maybe have an intermediary function that both this function and onGuildMessageReceived etc. call that takes only a param.
+	
+	/**
+	 * Reproduces an old sent message. Effectively the same as going through MessageListener#onGuildMessageReceived
+	 * JDA instance has to passed or we get an UnsupportedOperationException when trying to get the jda from the message if it's a {@link MessageType#GUILD_MEMBER_JOIN}.
+	 * @param jda The JDA instance
+	 * @param m The message to copy
+	 */
+	public static void reproduce(JDA jda, Message m) {
+		MessageInfo info = Utils.createMessageInfo(m);
+		if(m.getType().equals(MessageType.GUILD_MEMBER_JOIN)) {
+			info.setContent(m.getAuthor().getAsMention() + " joined the guild!");
+		}
+		Hub.sendMessage(m.getJDA(), info);
+		if(m.getReactions().size() > 0) { 
+			// Inefficient to do both send and update, but the best we can do without rewriting how messages and reactions are handled
+			Hub.updateReactions(jda, info.getMessageID(), info.getChannelID());
+		}
+	}
+
+
 
 
 	/**
@@ -626,11 +679,11 @@ public class Hub {
 	public static boolean isSourceGuild(String id) {
 		LOG.trace("Checking if {} is a source guild", id);
 		if(sourceGuilds.contains(id)) {
-			LOG.debug("{} is a source guild", id);
+			LOG.trace("{} is a source guild", id);
 			return true;
 		}
 
-		LOG.debug("{} is not a source guild", id);
+		LOG.trace("{} is not a source guild", id);
 		return false;
 	}
 

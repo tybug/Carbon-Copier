@@ -1,7 +1,6 @@
 package com.tybug.carboncopier.listeners;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +54,12 @@ public class CommandListener extends ListenerAdapter {
 
 		String content = event.getMessage().getContentRaw();
 
-		
+
 		if(content.startsWith("!test")) {
-			for(Message m : Hub.loadChannelHistory(event.getJDA().getTextChannelById("475149673816915981"))){
-				event.getJDA().getTextChannelById("477263076706484230").sendMessage("```\n" + m.getContentRaw() + "\n```").queue();
-			}
+
 		}
-		
-		
+
+
 		if(content.startsWith("!link")) {
 			LOG.info("Link command executed by {}", event.getAuthor().getName());
 			String[] parts = content.split(" ");
@@ -75,24 +72,23 @@ public class CommandListener extends ListenerAdapter {
 			Message m = event.getChannel().sendMessage("Would you like to copy previous message history from the guild?").complete();
 			m.addReaction(EMOJI_ACCEPT).queue();
 			m.addReaction(EMOJI_DENY).queue();
-			String messageID = m.getId();
 
+			String messageID = m.getId();
 			Utils.waiter.waitForEvent(MessageReactionAddEvent.class, 
 					e -> e.getMessageId().equals(messageID) && // Only trigger if it's the accept or deny reactions
-						 e.getReaction().getReactionEmote().getName().equals(EMOJI_ACCEPT) || e.getReaction().getReactionEmote().getName().equals(EMOJI_DENY), 
+					!e.getUser().isBot() &&
+					(e.getReaction().getReactionEmote().getName().equals(EMOJI_ACCEPT) || e.getReaction().getReactionEmote().getName().equals(EMOJI_DENY)), 
 					e -> {
 						if(e.getReaction().getReactionEmote().getName().equals(EMOJI_ACCEPT)) { 
-							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], true);
 							event.getChannel().sendMessage("Linking guilds and copying history").queue();
+							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], true);
 						} else if(e.getReaction().getReactionEmote().getName().equals(EMOJI_DENY)) {
-							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], false);
 							event.getChannel().sendMessage("Linking guilds without copying history").queue();
+							Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], false);
+
 						}
 					},
-					1, TimeUnit.MINUTES, () -> {
-						event.getChannel().sendMessage("You didn't react in a minute; defaulting to no history copy.").queue();
-						Hub.linkGuilds(event.getJDA(), event.getChannel(), parts[1], parts[2], false);
-					});
+					-1, null, null);
 		}
 
 

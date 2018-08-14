@@ -31,7 +31,7 @@ public class MessageListener extends ListenerAdapter {
 
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-		LOG.debug("Guild message received in {} from {}", event.getGuild().getName(), event.getAuthor().getName());
+		LOG.debug("Guild message received in guild {} from user {}", event.getGuild().getName(), event.getAuthor().getName());
 		if(!Hub.isSourceGuild(event.getGuild().getId())) {
 			return;
 		}
