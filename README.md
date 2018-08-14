@@ -4,6 +4,7 @@ A discord bot to copy every action performed on one server to another
 
 ## Setup
 * Git clone, or download option of your preference
+* Create a db/ directory directly under the project directory, and copy the db from example.db into it, renaming it to info.db
 * Add users you want to be able to execute commands to the AUTHORIZED table in the db (don't forget your own id!)
 * There is a calendar hack located at the bottom of src/main/java/com/tybug/carboncopier/Hub, under Hub#parseTime. Should this not produce timestamps to your liking in the embeds, change the value added to the calendar or remove it entirely
 * Add a config.txt file directly under the project directory (or in the same directory as the jar file, if executing from a jar) and put the bot's token as the first line
