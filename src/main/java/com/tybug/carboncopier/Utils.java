@@ -28,6 +28,7 @@ public class Utils {
 		info.setMessageID(m.getId());
 		info.setChannelID(m.getChannel().getId());
 		info.setGuildID(m.getGuild().getId());
+		info.setEditedTime(m.getEditedTime());
 		
 		return info;
 	}

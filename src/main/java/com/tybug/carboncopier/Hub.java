@@ -150,12 +150,11 @@ public class Hub {
 			}
 			MessageHistory history = MessageHistory.getHistoryAround(text, text.getId()).limit(3).complete();	
 			
-			List<Message> messages = history.getRetrievedHistory();
-			if(messages.size() == 0) {
+			if(history.isEmpty()) {
 				LOG.debug("No messages found in channel {}", text.getName());
 				continue;
 			}
-			Message m = messages.get(0); 
+			Message m = history.getRetrievedHistory().get(0); 
 			reproduce(jda, m);
 			
 			// We're loading them only one at a time in case we encounter a channel with millions of messages. Storing them all would result in a stack overflow.
