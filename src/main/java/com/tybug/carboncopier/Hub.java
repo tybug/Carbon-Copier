@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -30,8 +31,8 @@ import net.dv8tion.jda.core.entities.MessageEmbed;
 import net.dv8tion.jda.core.entities.MessageEmbed.Field;
 import net.dv8tion.jda.core.entities.MessageHistory;
 import net.dv8tion.jda.core.entities.MessageReaction;
-import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.MessageReaction.ReactionEmote;
+import net.dv8tion.jda.core.entities.MessageType;
 import net.dv8tion.jda.core.entities.PermissionOverride;
 import net.dv8tion.jda.core.entities.PrivateChannel;
 import net.dv8tion.jda.core.entities.Role;
@@ -754,6 +755,14 @@ public class Hub {
 	private static String parseTime(OffsetDateTime timestamp) {
 		LOG.trace("Parsing timestamp {}", timestamp);
 		Date date = Date.from(timestamp.toInstant());
+		
+		
+		Calendar cal = Calendar.getInstance(); // creates calendar
+	    cal.setTime(date); // sets calendar time/date
+	    cal.add(Calendar.HOUR_OF_DAY, -4); // adds one hour
+	    date = cal.getTime(); // returns new date object, one hour in the future
+	    
+	    
 		SimpleDateFormat format = new SimpleDateFormat("M/dd/yyyy h:mm a");
 		LOG.trace("Parsed {} to {}", timestamp, format.format(date));
 		return format.format(date);
