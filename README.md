@@ -1,5 +1,5 @@
 # Carbon-Copier
-A discord bot to copy every action performed on one server to another
+A discord bot to copy every action performed on one server to another - for historic purposes, viewing deleted images/messages, or in case a channel ever gets deleted and you want to save the message history.
 
 
 ## Setup
