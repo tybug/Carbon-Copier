@@ -9,9 +9,9 @@ A discord bot to copy every action performed on one server to another - for hist
 	* Modify the channel CommandListener.java listens to, or remove automatic rebuilding entirely
 
 ## Showcase
-<img align="middle" src="https://i.imgur.com/Lc11Xsp.png" height="250" width="136">
-<img align="left" src="https://i.imgur.com/stamLVj.png" height="374" width="250">
-<img align="middle" src="https://i.imgur.com/ycyMg1w.png" height="250" width="250">
+<img align="left" src="https://i.imgur.com/Lc11Xsp.png" height="250" width="136">
+<img align="middle" src="https://i.imgur.com/stamLVj.png" height="374" width="250">
+<img align="right" src="https://i.imgur.com/ycyMg1w.png" height="250" width="250">
 
 
 ## Commands
