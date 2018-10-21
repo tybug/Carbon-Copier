@@ -8,10 +8,6 @@ A discord bot to copy every action performed on one server to another - for hist
 	* Add authorized users to the db
 	* Modify the channel CommandListener.java listens to, or remove automatic rebuilding entirely
 
-## Showcase
-<img src="https://i.imgur.com/Lc11Xsp.png" height="250" width="136">
-<img src="https://i.imgur.com/stamLVj.png" height="250" width="374">
-<img src="https://i.imgur.com/ycyMg1w.png" height="250" width="250">
 
 
 ## Commands
