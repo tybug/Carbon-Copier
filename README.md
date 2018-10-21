@@ -8,6 +8,8 @@ A discord bot to copy every action performed on one server to another - for hist
 	* Add authorized users to the db
 	* Modify the channel CommandListener.java listens to, or remove automatic rebuilding entirely
 
+## Showcase
+![Bot in Action](/showcase/ex1.png?raw=true)
 
 ## Commands
 * !link \[source] \[target] - Links two guilds together, copying all past and future message history
